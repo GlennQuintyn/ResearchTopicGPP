@@ -49,7 +49,7 @@ SteeringOutput Cohesion::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 {
 	SteeringOutput steering = {};
 
-	Elite::Vector2 target{ m_pFlock->GetAverageNeighborPos() };
+	Elite::Vector2 target{ m_pFlock->GetAverageNeighborPos(pAgent->GetBodyColor()) };
 
 	steering.LinearVelocity = target - pAgent->GetPosition();
 	steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
@@ -71,7 +71,7 @@ SteeringOutput VelocityMatch::CalculateSteering(float deltaT, SteeringAgent* pAg
 {
 	SteeringOutput steering = {};
 
-	Elite::Vector2 speed{ m_pFlock->GetAverageNeighborVelocity() };
+	Elite::Vector2 speed{ m_pFlock->GetAverageNeighborVelocity(pAgent->GetBodyColor()) };
 
 	steering.LinearVelocity = speed; //Rescale to Max Speed
 

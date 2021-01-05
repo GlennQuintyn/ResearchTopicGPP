@@ -20,6 +20,12 @@ Flock::Flock(int flockSize, float worldSize, SteeringAgent* pAgentToEvade, bool 
 {
 	m_pWanderEvader = nullptr;
 
+	float spawnWidth{ worldSize / 5.f };
+	float spawnHeight{ worldSize / 2.f };
+
+	m_BlueSpawnZone = { {worldSize / 8.f, worldSize / 4.f},spawnWidth,  spawnHeight };
+	m_RedSpawnZone = { {(worldSize * 7.f / 8.f) - spawnWidth, worldSize / 4.f}, spawnWidth, spawnHeight };
+
 	//evade agenet andd its behavior
 	//m_pWanderEvader = new Wander();
 	//m_pAgentToEvade = new SteeringAgent();
@@ -37,8 +43,11 @@ Flock::Flock(int flockSize, float worldSize, SteeringAgent* pAgentToEvade, bool 
 	m_pWanderBehavior = new Wander();
 
 	//blended steering
-	m_pBlendedSteering = new BlendedSteering({ { m_pSperationBehavior,0.25f }, { m_pCohesionBehavior,0.25f }
-		, { m_pVelMathcBehavior,0.25f } , { m_pSeekBehavior,0.25f } , {m_pWanderBehavior ,0.25f } });//implicit vetor of weighted behavior
+	//m_pBlendedSteering = new BlendedSteering({ { m_pSperationBehavior, 0.25f }, { m_pCohesionBehavior,0.25f }
+	//	, { m_pVelMathcBehavior,0.25f } , { m_pSeekBehavior,0.25f } , {m_pWanderBehavior ,0.25f } });//implicit vetor of weighted behavior
+
+	m_pBlendedSteering = new BlendedSteering({ { m_pSperationBehavior, 0 }, { m_pCohesionBehavior, 0 }
+		, { m_pVelMathcBehavior, 0 } , { m_pSeekBehavior, 0 } , {m_pWanderBehavior , 0 } });//implicit vetor of weighted behavior
 
 	//behaviors for priority steering
 	m_pEvadeBehavior = new Evade();
@@ -54,12 +63,12 @@ Flock::Flock(int flockSize, float worldSize, SteeringAgent* pAgentToEvade, bool 
 	for (int i = 0; i < m_FlockSize / 2; i++)
 	{
 		m_Agents.push_back(new SteeringAgent{});
-		m_Agents[i]->SetPosition({ Elite::randomFloat(0,m_WorldSize), Elite::randomFloat(0,m_WorldSize) });
+		m_Agents[i]->SetPosition({ Elite::randomFloat(m_BlueSpawnZone.bottomLeft.x,m_BlueSpawnZone.bottomLeft.x + spawnWidth), Elite::randomFloat(m_BlueSpawnZone.bottomLeft.y,m_BlueSpawnZone.bottomLeft.y + spawnHeight) });
 		m_Agents[i]->SetMaxLinearSpeed(35.f);
 		m_Agents[i]->SetAutoOrient(true);
 		m_Agents[i]->SetMass(1.f);
 		m_Agents[i]->SetSteeringBehavior(m_pPrioritySteering);
-		m_Agents[i]->SetBodyColor({ 0,0,1 });
+		m_Agents[i]->SetBodyColor(m_Blue);
 		m_pSpacePartitioning->AddAgent(m_Agents[i]);
 		m_OldAgentPosVec.push_back(m_Agents[i]->GetPosition());
 	}
@@ -67,12 +76,12 @@ Flock::Flock(int flockSize, float worldSize, SteeringAgent* pAgentToEvade, bool 
 	for (int i = m_FlockSize / 2; i < m_FlockSize; i++)
 	{
 		m_Agents.push_back(new SteeringAgent{});
-		m_Agents[i]->SetPosition({ Elite::randomFloat(0,m_WorldSize), Elite::randomFloat(0,m_WorldSize) });
+		m_Agents[i]->SetPosition({ Elite::randomFloat(m_RedSpawnZone.bottomLeft.x,m_RedSpawnZone.bottomLeft.x + spawnWidth), Elite::randomFloat(m_RedSpawnZone.bottomLeft.y,m_RedSpawnZone.bottomLeft.y + spawnHeight) });
 		m_Agents[i]->SetMaxLinearSpeed(35.f);
 		m_Agents[i]->SetAutoOrient(true);
 		m_Agents[i]->SetMass(1.f);
 		m_Agents[i]->SetSteeringBehavior(m_pPrioritySteering);
-		m_Agents[i]->SetBodyColor({ 1,0,0 });
+		m_Agents[i]->SetBodyColor(m_Red);
 		m_pSpacePartitioning->AddAgent(m_Agents[i]);
 		m_OldAgentPosVec.push_back(m_Agents[i]->GetPosition());
 	}
@@ -108,12 +117,15 @@ void Flock::Update(float deltaT, float worldSize, const TargetData& targetData)
 	//agentToEvadeDate.Position = m_pAgentToEvade->GetPosition();
 	//agentToEvadeDate.LinearVelocity = m_pAgentToEvade->GetLinearVelocity();
 
-	for (SteeringAgent* steeringAgent : m_Agents)
+	/*for (SteeringAgent* steeringAgent : m_Agents)
 	{
 		steeringAgent->SetBodyColor({ 1,1,0 });
-	}
+	}*/
 
 	m_pSeekBehavior->SetTarget(targetData);
+	//TargetData selfMadeTargetData{};
+	//selfMadeTargetData.Position = { m_WorldSize / 2.f ,m_WorldSize / 2.f };
+	//m_pSeekBehavior->SetTarget(selfMadeTargetData);
 
 	//m_pAgentToEvade->Update(deltaT);
 	//m_pAgentToEvade->TrimToWorld({ 0,0 }, { worldSize ,worldSize });
@@ -157,7 +169,7 @@ void Flock::Update(float deltaT, float worldSize, const TargetData& targetData)
 				m_Agents[0]->SetRenderBehavior(true);
 				for (int index{}; index < m_NrOfNeighbors; ++index)
 				{
-					m_Neighbors[index]->SetBodyColor({ 0, 1, 0 });
+					//m_Neighbors[index]->SetBodyColor({ 0, 1, 0 });
 				}
 			}
 			firstTime = false;
@@ -183,6 +195,23 @@ void Flock::Render(float deltaT) const
 	{
 		m_pSpacePartitioning->RenderCells();
 	}
+
+	std::vector<Elite::Vector2> Vec(4);//max of 4 point to polygon available
+
+	Vec[0] = m_BlueSpawnZone.bottomLeft;
+	Vec[1] = { m_BlueSpawnZone.bottomLeft.x + m_BlueSpawnZone.width,m_BlueSpawnZone.bottomLeft.y };
+	Vec[2] = { m_BlueSpawnZone.bottomLeft.x + m_BlueSpawnZone.width,m_BlueSpawnZone.bottomLeft.y + m_BlueSpawnZone.height };
+	Vec[3] = { m_BlueSpawnZone.bottomLeft.x ,m_BlueSpawnZone.bottomLeft.y + m_BlueSpawnZone.height };
+
+	DEBUGRENDERER2D->DrawPolygon(&Vec[0], 4, { 0, 0, .7f }, .9f);
+
+	Vec[0] = m_RedSpawnZone.bottomLeft;
+	Vec[1] = { m_RedSpawnZone.bottomLeft.x + m_RedSpawnZone.width,m_RedSpawnZone.bottomLeft.y };
+	Vec[2] = { m_RedSpawnZone.bottomLeft.x + m_RedSpawnZone.width,m_RedSpawnZone.bottomLeft.y + m_RedSpawnZone.height };
+	Vec[3] = { m_RedSpawnZone.bottomLeft.x ,m_RedSpawnZone.bottomLeft.y + m_RedSpawnZone.height };
+
+	DEBUGRENDERER2D->DrawPolygon(&Vec[0], 4, { 0.7f, 0, 0 }, .9f);
+
 }
 
 void Flock::UpdateAndRenderUI()
@@ -258,34 +287,47 @@ void Flock::RegisterNeighbors(SteeringAgent* pAgent)
 	}
 }
 
-Elite::Vector2 Flock::GetAverageNeighborPos() const
+Elite::Vector2 Flock::GetAverageNeighborPos(const Elite::Color& color) const
 {
 	Elite::Vector2 averagePos{};
+	int count{};
 
 	for (int index{}; index < m_NrOfNeighbors; ++index)
 	{
-		averagePos += m_Neighbors[index]->GetPosition();
+		//check if colors are equal
+		if (m_Neighbors[index]->GetBodyColor() == color)
+		{
+			averagePos += m_Neighbors[index]->GetPosition();
+			++count;
+		}		
 	}
-	if (m_NrOfNeighbors != 0)
+
+	if (count != 0)
 	{
-		averagePos /= float(m_NrOfNeighbors);
+		averagePos /= float(count);
 	}
 
 	return averagePos;
 }
 
-Elite::Vector2 Flock::GetAverageNeighborVelocity() const
+Elite::Vector2 Flock::GetAverageNeighborVelocity(const Elite::Color& color) const
 {
 	Elite::Vector2 averageVelocity{};
+	int count{};
 
 	for (int index{}; index < m_NrOfNeighbors; ++index)
 	{
-		averageVelocity += m_Neighbors[index]->GetLinearVelocity();
+		//check if colors are equal
+		if (m_Neighbors[index]->GetBodyColor() == color)
+		{
+			averageVelocity += m_Neighbors[index]->GetLinearVelocity();
+			++count;
+		}
 	}
 
-	if (m_NrOfNeighbors != 0)
+	if (count != 0)
 	{
-		averageVelocity /= float(m_NrOfNeighbors);
+		averageVelocity /= float(count);
 	}
 
 	return averageVelocity;

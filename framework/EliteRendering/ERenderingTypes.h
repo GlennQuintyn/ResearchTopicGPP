@@ -21,6 +21,16 @@ namespace Elite
 		{
 			r = _r; g = _g; b = _b; a = _a;
 		}
+
+		//=== Relational Operators ===
+		inline auto operator==(const Color& c) const /*Check if both components are equal*/
+		{
+			return AreEqual(r, c.r) && AreEqual(g, c.g) && AreEqual(b, c.b);
+		}
+		inline auto operator!=(const Color& c) const /*Check if one or both components are NOT equal*/
+		{
+			return !(*this == c);
+		}
 	};
 	//Basic vertex
 	struct Vertex final

@@ -23,8 +23,8 @@ public:
 	int GetNrOfNeighbors() const { return m_NrOfNeighbors; }
 	const vector<SteeringAgent*>& GetNeighbors() const { return m_Neighbors; }
 
-	Elite::Vector2 GetAverageNeighborPos() const;
-	Elite::Vector2 GetAverageNeighborVelocity() const;
+	Elite::Vector2 GetAverageNeighborPos(const Elite::Color& color) const;
+	Elite::Vector2 GetAverageNeighborVelocity(const Elite::Color& color) const;
 
 private:
 	//Space partitioning
@@ -59,6 +59,13 @@ private:
 	Wander* m_pWanderBehavior;
 	Evade* m_pEvadeBehavior;
 	Wander* m_pWanderEvader;
+
+	//spawn zones
+	Elite::Rect m_BlueSpawnZone{};
+	Elite::Rect m_RedSpawnZone{};
+
+	Elite::Color m_Blue{ 0, 0, 1.f };
+	Elite::Color m_Red{ 1.f, 0, 0 };
 
 	//UI bools
 	bool m_DebugRenderSteering{};
