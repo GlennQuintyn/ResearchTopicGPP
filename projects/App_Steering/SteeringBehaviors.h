@@ -12,6 +12,7 @@
 //-----------------------------------------------------------------
 #include "SteeringHelpers.h"
 class SteeringAgent;
+class Flock;
 using namespace Elite;
 
 #pragma region **ISTEERINGBEHAVIOR** (BASE)
@@ -153,6 +154,32 @@ public:
 private:
 	float m_EvadeRadius = 15.f;
 	float m_EvadePredRange = 5.f;
+};
+
+//////////////////////////
+//ATTACK
+//******
+class Attack : public ISteeringBehavior
+{
+public:
+	Attack(Flock* pflock)
+		:m_pFlock{ pflock }
+	{}
+	virtual ~Attack() = default;
+
+	//Pursuit Behavior
+	SteeringOutput CalculateSteering(float deltaT, SteeringAgent* pAgent) override;
+
+	void SetAttackRadius(float radius) { m_AttackRadius = radius; }
+	//void SetPredictionRange(float range) { m_EvadePredRange = range; }
+
+private:
+	float m_AttackRadius = 20.f;
+	//float m_EvadePredRange = 5.f;
+
+	Flock* m_pFlock = nullptr;
+	Elite::Color m_Blue{ 0, 0, 1.f };
+	Elite::Color m_Red{ 1.f, 0, 0 };
 };
 
 #endif

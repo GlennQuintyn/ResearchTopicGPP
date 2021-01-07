@@ -27,6 +27,8 @@ public:
 
 	void AddBehaviour(WeightedBehavior weightedBehavior) { m_WeightedBehaviors.push_back(weightedBehavior); }
 	SteeringOutput CalculateSteering(float deltaT, SteeringAgent* pAgent) override;
+	ISteeringBehavior* GetBehaviorByIndex(uint32_t index);
+
 
 private:
 	vector<WeightedBehavior> m_WeightedBehaviors = {};
@@ -43,6 +45,7 @@ public:
 
 	void AddBehaviour(ISteeringBehavior* pBehavior) { m_PriorityBehaviors.push_back(pBehavior); }
 	SteeringOutput CalculateSteering(float deltaT, SteeringAgent* pAgent) override;
+	ISteeringBehavior* GetBehaviourByIndex(uint32_t index);
 
 private:
 	vector<ISteeringBehavior*> m_PriorityBehaviors = {};

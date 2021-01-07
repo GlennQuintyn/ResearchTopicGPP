@@ -10,8 +10,18 @@ SteeringOutput Seperation::CalculateSteering(float deltaT, SteeringAgent* pAgent
 {
 	SteeringOutput steering = {};
 
-	vector<SteeringAgent*> neighbors{ m_pFlock->GetNeighbors() };
-	int nrNeighbors{ m_pFlock->GetNrOfNeighbors() };
+	vector<SteeringAgent*> neighbors{};
+	int nrNeighbors{};
+	if (pAgent->GetBodyColor() == m_Blue)
+	{
+		neighbors = m_pFlock->GetBlueNeighbors();
+		nrNeighbors = m_pFlock->GetNrOfBlueNeighbors();
+	}
+	else if (pAgent->GetBodyColor() == m_Red)
+	{
+		neighbors = m_pFlock->GetRedNeighbors();
+		nrNeighbors = m_pFlock->GetNrOfRedNeighbors();
+	}
 
 	Elite::Vector2 fleeVector{};
 	float speed{}, tempSpeed{};
@@ -49,7 +59,16 @@ SteeringOutput Cohesion::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 {
 	SteeringOutput steering = {};
 
-	Elite::Vector2 target{ m_pFlock->GetAverageNeighborPos(pAgent->GetBodyColor()) };
+	Elite::Vector2 target{ };
+
+	if (pAgent->GetBodyColor() == m_Blue)
+	{
+		target = m_pFlock->GetAverageBlueNeighborPos(pAgent->GetBodyColor());
+	}
+	else if (pAgent->GetBodyColor() == m_Red)
+	{
+		target = m_pFlock->GetAverageRedNeighborPos(pAgent->GetBodyColor());
+	}
 
 	steering.LinearVelocity = target - pAgent->GetPosition();
 	steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
@@ -71,7 +90,16 @@ SteeringOutput VelocityMatch::CalculateSteering(float deltaT, SteeringAgent* pAg
 {
 	SteeringOutput steering = {};
 
-	Elite::Vector2 speed{ m_pFlock->GetAverageNeighborVelocity(pAgent->GetBodyColor()) };
+	Elite::Vector2 speed{};// m_pFlock->GetAverageBlueNeighborVelocity(pAgent->GetBodyColor())
+
+	if (pAgent->GetBodyColor() == m_Blue)
+	{
+		speed = m_pFlock->GetAverageBlueNeighborVelocity(pAgent->GetBodyColor());
+	}
+	else if (pAgent->GetBodyColor() == m_Red)
+	{
+		speed = m_pFlock->GetAverageRedNeighborVelocity(pAgent->GetBodyColor());
+	}
 
 	steering.LinearVelocity = speed; //Rescale to Max Speed
 

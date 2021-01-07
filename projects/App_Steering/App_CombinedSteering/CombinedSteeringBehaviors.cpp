@@ -36,6 +36,15 @@ SteeringOutput BlendedSteering::CalculateSteering(float deltaT, SteeringAgent* p
 	return blendedSteering;
 }
 
+ISteeringBehavior* BlendedSteering::GetBehaviorByIndex(uint32_t index)
+{
+	if (index < m_WeightedBehaviors.size())
+	{
+		return m_WeightedBehaviors[index].pBehavior;
+	}
+	return nullptr;
+}
+
 //*****************
 //PRIORITY STEERING
 SteeringOutput PrioritySteering::CalculateSteering(float deltaT, SteeringAgent* pAgent)
@@ -52,4 +61,13 @@ SteeringOutput PrioritySteering::CalculateSteering(float deltaT, SteeringAgent* 
 
 	//If non of the behavior return a valid output, last behavior is returned
 	return steering;
+}
+
+ISteeringBehavior* PrioritySteering::GetBehaviourByIndex(uint32_t index)
+{
+	if (index < m_PriorityBehaviors.size())
+	{
+		return m_PriorityBehaviors[index];
+	}
+	return nullptr;
 }

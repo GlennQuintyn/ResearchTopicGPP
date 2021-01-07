@@ -16,7 +16,7 @@ class App_Flocking final : public IApp
 {
 public:
 	//Constructor & Destructor
-	App_Flocking() = default;
+	App_Flocking();
 	virtual ~App_Flocking();
 
 	//App Functions
@@ -26,7 +26,8 @@ public:
 
 private:
 	//Datamembers
-	TargetData m_MouseTarget = {};
+	TargetData m_MouseTargetLclick = {};
+	TargetData m_MouseTargetRclick = {};
 	bool m_UseMouseTarget = true;
 	bool m_VisualizeMouseTarget = true;
 	float m_TrimWorldSize = 200.f;
@@ -34,7 +35,7 @@ private:
 	SteeringAgent* m_pAgentToEvade = nullptr;
 
 	//flock object
-	Flock m_Flock{ 100,m_TrimWorldSize,m_pAgentToEvade ,true };
+	Flock m_Flock{ 36, 36, m_TrimWorldSize, m_pAgentToEvade, true };
 
 	//C++ make the class non-copyable
 	App_Flocking(const App_Flocking&) = delete;

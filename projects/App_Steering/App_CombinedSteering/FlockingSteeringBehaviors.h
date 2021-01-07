@@ -17,6 +17,8 @@ public:
 
 private:
 	Flock* m_pFlock = nullptr;
+	Elite::Color m_Blue{ 0, 0, 1.f };
+	Elite::Color m_Red{ 1.f, 0, 0 };
 };
 
 
@@ -35,6 +37,8 @@ public:
 
 private:
 	Flock* m_pFlock = nullptr;
+	Elite::Color m_Blue{ 0, 0, 1.f };
+	Elite::Color m_Red{ 1.f, 0, 0 };
 };
 
 
@@ -53,4 +57,6 @@ public:
 
 private:
 	Flock* m_pFlock = nullptr;
+	Elite::Color m_Blue{ 0, 0, 1.f };
+	Elite::Color m_Red{ 1.f, 0, 0 };
 };

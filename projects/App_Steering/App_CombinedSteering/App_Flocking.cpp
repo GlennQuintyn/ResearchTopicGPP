@@ -6,6 +6,12 @@
 #include "../SteeringAgent.h"
 #include "Flock.h"
 
+App_Flocking::App_Flocking()
+{
+	m_MouseTargetLclick.Position = { m_TrimWorldSize / 5.f, m_TrimWorldSize / 2.f };
+	m_MouseTargetRclick.Position = { m_TrimWorldSize * 4.f / 5.f, m_TrimWorldSize / 2.f };
+}
+
 //Destructor
 App_Flocking::~App_Flocking()
 {
@@ -25,11 +31,17 @@ void App_Flocking::Update(float deltaTime)
 	if (INPUTMANAGER->IsMouseButtonUp(InputMouseButton::eLeft) && m_VisualizeMouseTarget)
 	{
 		auto const mouseData = INPUTMANAGER->GetMouseData(InputType::eMouseButton, InputMouseButton::eLeft);
-		m_MouseTarget.Position = DEBUGRENDERER2D->GetActiveCamera()->ConvertScreenToWorld({ static_cast<float>(mouseData.X), static_cast<float>(mouseData.Y) });
+		m_MouseTargetLclick.Position = DEBUGRENDERER2D->GetActiveCamera()->ConvertScreenToWorld({ static_cast<float>(mouseData.X), static_cast<float>(mouseData.Y) });
+	}
+
+	if (INPUTMANAGER->IsMouseButtonUp(InputMouseButton::eMiddle) && m_VisualizeMouseTarget)
+	{
+		auto const mouseData = INPUTMANAGER->GetMouseData(InputType::eMouseButton, InputMouseButton::eMiddle);
+		m_MouseTargetRclick.Position = DEBUGRENDERER2D->GetActiveCamera()->ConvertScreenToWorld({ static_cast<float>(mouseData.X), static_cast<float>(mouseData.Y) });
 	}
 
 	m_Flock.UpdateAndRenderUI();
-	m_Flock.Update(deltaTime, m_TrimWorldSize, m_MouseTarget);
+	m_Flock.Update(deltaTime, m_TrimWorldSize, m_MouseTargetLclick, m_MouseTargetRclick);
 }
 
 void App_Flocking::Render(float deltaTime) const
@@ -47,5 +59,5 @@ void App_Flocking::Render(float deltaTime) const
 
 	//Render Target
 	if (m_VisualizeMouseTarget)
-		DEBUGRENDERER2D->DrawSolidCircle(m_MouseTarget.Position, 0.3f, { 0.f,0.f }, { 1.f,0.f,0.f }, -0.8f);
+		DEBUGRENDERER2D->DrawSolidCircle(m_MouseTargetLclick.Position, 0.3f, { 0.f,0.f }, { 1.f,0.f,0.f }, -0.8f);
 }

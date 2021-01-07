@@ -11,34 +11,51 @@ class CellSpace;
 class Flock
 {
 public:
-	Flock(int flockSize = 50, float worldSize = 100.f, SteeringAgent* pAgentToEvade = nullptr, bool trimWorld = false);
+	Flock(int blueAgents = 50, int redAgents = 50, float worldSize = 100.f, SteeringAgent* pAgentToEvade = nullptr, bool trimWorld = false);
 
 	~Flock();
 
-	void Update(float deltaT, float worldSize, const TargetData& targetData);
+	void Update(float deltaT, float worldSize, const TargetData& targetDataLclick, const TargetData& targetDataRclick);
 	void UpdateAndRenderUI();
 	void Render(float deltaT) const;
 
-	void RegisterNeighbors(SteeringAgent* pAgent);
-	int GetNrOfNeighbors() const { return m_NrOfNeighbors; }
-	const vector<SteeringAgent*>& GetNeighbors() const { return m_Neighbors; }
+	void RegisterBlueNeighbours(SteeringAgent* pAgent);
+	void RegisterRedNeighbours(SteeringAgent* pAgent);
+	
+	int GetNrOfBlueNeighbors() const { return m_NrOfBlueNeighbors; }
+	int GetNrOfRedNeighbors() const { return m_NrOfRedNeighbors; }
+	
+	Elite::Vector2 GetClosestEnemyLocation(const Elite::Vector2& agentPos,const Elite::Color& color) const;
+	//Elite::Vector2 GetNrOfRedNeighbors() const { return m_NrOfRedNeighbors; }
 
-	Elite::Vector2 GetAverageNeighborPos(const Elite::Color& color) const;
-	Elite::Vector2 GetAverageNeighborVelocity(const Elite::Color& color) const;
+	const vector<SteeringAgent*>& GetBlueNeighbors() const { return m_BlueNeighbors; }
+	const vector<SteeringAgent*>& GetRedNeighbors() const { return m_RedNeighbors; }
+
+	Elite::Vector2 GetAverageBlueNeighborPos(const Elite::Color& color) const;
+	Elite::Vector2 GetAverageRedNeighborPos(const Elite::Color& color) const;
+	
+	Elite::Vector2 GetAverageBlueNeighborVelocity(const Elite::Color& color) const;
+	Elite::Vector2 GetAverageRedNeighborVelocity(const Elite::Color& color) const;
+
+
 
 private:
 	//Space partitioning
 	CellSpace* m_pSpacePartitioning{ nullptr };
 	std::vector<Elite::Vector2> m_OldAgentPosVec{};
 
-	// flock agents
-	int m_FlockSize = 0;
-	vector<SteeringAgent*> m_Agents{};
+	
+	int m_BlueGroupSize = 0;
+	int m_RedGroupSize = 0;
+	vector<SteeringAgent*> m_BlueAgents{};
+	vector<SteeringAgent*> m_RedAgents{};
 
 	// neighborhood agents
-	vector<SteeringAgent*> m_Neighbors;
+	vector<SteeringAgent*> m_BlueNeighbors;
+	vector<SteeringAgent*> m_RedNeighbors;
 	float m_NeighborhoodRadius = 10.f;
-	int m_NrOfNeighbors = 0;
+	int m_NrOfBlueNeighbors = 0;
+	int m_NrOfRedNeighbors = 0;
 
 	// evade target
 	SteeringAgent* m_pAgentToEvade = nullptr;
@@ -48,24 +65,39 @@ private:
 	float m_WorldSize = 0.f;
 
 	// steering Behaviors
-	BlendedSteering* m_pBlendedSteering = nullptr;
-	PrioritySteering* m_pPrioritySteering = nullptr;
+	BlendedSteering* m_pBlueBlendedSteering = nullptr;
+	BlendedSteering* m_pRedBlendedSteering = nullptr;
+	PrioritySteering* m_pBluePrioritySteering = nullptr;
+	PrioritySteering* m_pRedPrioritySteering = nullptr;
 
 	//Behaviors
 	Seperation* m_pSperationBehavior;
 	Cohesion* m_pCohesionBehavior;
 	VelocityMatch* m_pVelMathcBehavior;
-	Seek* m_pSeekBehavior;
-	Wander* m_pWanderBehavior;
+	Seek* m_pBlueSeekBehavior;
+	Seek* m_pRedSeekBehavior;
+	//Wander* m_pWanderBehavior;
+	//Wander* m_pWanderEvader;
 	Evade* m_pEvadeBehavior;
-	Wander* m_pWanderEvader;
+	Attack* m_pAttackBehavior;
 
 	//spawn zones
 	Elite::Rect m_BlueSpawnZone{};
 	Elite::Rect m_RedSpawnZone{};
 
+
+	//body/team colors
 	Elite::Color m_Blue{ 0, 0, 1.f };
 	Elite::Color m_Red{ 1.f, 0, 0 };
+
+	float m_AttackRange{};
+
+	//static inline const char* m_pFormations[]{ "Form A", "Form B", "Form C" };
+
+	int m_BlueFormationIdx{};
+	int m_RedFormationIdx{};
+
+	bool m_Attack{};
 
 	//UI bools
 	bool m_DebugRenderSteering{};
@@ -74,7 +106,10 @@ private:
 	bool m_EnablePartitioning{};
 
 	// private functions
-	float* GetWeight(ISteeringBehavior* pBehaviour);
+	float* GetBlueWeight(ISteeringBehavior* pBehaviour);
+	float* GetRedWeight(ISteeringBehavior* pBehaviour);
+	
+	void SetAgentTarget(SteeringAgent* pSteeringAgent,const TargetData& targetdata);
 
 private:
 	Flock(const Flock& other);

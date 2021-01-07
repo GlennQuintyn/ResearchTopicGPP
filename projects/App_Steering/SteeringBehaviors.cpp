@@ -4,6 +4,7 @@
 //Includes
 #include "SteeringBehaviors.h"
 #include "SteeringAgent.h"
+#include "projects/App_Steering/App_CombinedSteering/Flock.h"
 
 //SEEK
 //****
@@ -11,7 +12,16 @@ SteeringOutput Seek::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 {
 	SteeringOutput steering = {};
 
-	steering.LinearVelocity = (m_Target).Position - pAgent->GetPosition(); //Desired Velocity
+	float distance{ Elite::DistanceSquared(pAgent->GetPosition(), m_Target.Position) };
+
+	//outside range
+	if (distance <= 0.05f)
+	{
+		steering.IsValid = false;
+		return steering;
+	}
+
+	steering.LinearVelocity = m_Target.Position - pAgent->GetPosition(); //Desired Velocity
 	steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
 	steering.LinearVelocity *= pAgent->GetMaxLinearSpeed(); //Rescale to Max Speed
 
@@ -192,7 +202,7 @@ SteeringOutput Evade::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 	}
 
 	Elite::Vector2 evadepoint{ m_Target.Position + (m_Target.LinearVelocity.GetNormalized() * m_EvadePredRange) };
-	target= pAgent->GetPosition() - evadepoint;
+	target = pAgent->GetPosition() - evadepoint;
 
 	steering.LinearVelocity = target;
 	steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
@@ -207,4 +217,29 @@ SteeringOutput Evade::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 		DEBUGRENDERER2D->DrawDirection(m_Target.Position, target, 1000, { 1,1,1 }, 0.1f); //target point
 	}
 	return steering;
+}
+
+//ATTACK
+//******
+SteeringOutput Attack::CalculateSteering(float deltaT, SteeringAgent* pAgent)
+{
+	SteeringOutput steering = {};
+	Elite::Vector2 closestEnemyPos = m_pFlock->GetClosestEnemyLocation(pAgent->GetPosition(), pAgent->GetBodyColor());
+	if (Elite::Distance(pAgent->GetPosition(), closestEnemyPos) >= m_AttackRadius)
+	{
+		steering.IsValid = false;
+		return steering;
 	}
+
+	//closestEnemyPos = m_pFlock->GetClosestEnemyLocation(pAgent->GetPosition(), pAgent->GetBodyColor());
+
+	steering.LinearVelocity = closestEnemyPos - pAgent->GetPosition(); //Desired Velocity
+	steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
+	steering.LinearVelocity *= pAgent->GetMaxLinearSpeed(); //Rescale to Max Speed
+
+	//DEBUG RENDERING
+	if (pAgent->CanRenderBehavior())
+		DEBUGRENDERER2D->DrawDirection(pAgent->GetPosition(), steering.LinearVelocity, 5, { 0,1,0 }, 0.4f);
+
+	return steering;
+}
