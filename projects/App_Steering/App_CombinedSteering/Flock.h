@@ -8,6 +8,12 @@ class BlendedSteering;
 class PrioritySteering;
 class CellSpace;
 
+enum class Formations
+{
+	FormA,
+	FormB
+};
+
 class Flock
 {
 public:
@@ -21,11 +27,11 @@ public:
 
 	void RegisterBlueNeighbours(SteeringAgent* pAgent);
 	void RegisterRedNeighbours(SteeringAgent* pAgent);
-	
+
 	int GetNrOfBlueNeighbors() const { return m_NrOfBlueNeighbors; }
 	int GetNrOfRedNeighbors() const { return m_NrOfRedNeighbors; }
-	
-	SteeringAgent* GetClosestEnemy(const Elite::Vector2& agentPos,const Elite::Color& color) const;
+
+	SteeringAgent* GetClosestEnemy(const Elite::Vector2& agentPos, const Elite::Color& color) const;
 	//Elite::Vector2 GetNrOfRedNeighbors() const { return m_NrOfRedNeighbors; }
 
 	const vector<SteeringAgent*>& GetBlueNeighbors() const { return m_BlueNeighbors; }
@@ -33,7 +39,7 @@ public:
 
 	Elite::Vector2 GetAverageBlueNeighborPos(const Elite::Color& color) const;
 	Elite::Vector2 GetAverageRedNeighborPos(const Elite::Color& color) const;
-	
+
 	Elite::Vector2 GetAverageBlueNeighborVelocity(const Elite::Color& color) const;
 	Elite::Vector2 GetAverageRedNeighborVelocity(const Elite::Color& color) const;
 
@@ -44,7 +50,7 @@ private:
 	CellSpace* m_pSpacePartitioning{ nullptr };
 	std::vector<Elite::Vector2> m_OldAgentPosVec{};
 
-	
+
 	int m_BlueGroupSize = 0;
 	int m_RedGroupSize = 0;
 	vector<SteeringAgent*> m_BlueAgents{};
@@ -84,14 +90,15 @@ private:
 	//spawn zones
 	Elite::Rect m_BlueSpawnZone{};
 	Elite::Rect m_RedSpawnZone{};
-
+	float m_SpawnWidth{};
+	float m_SpawnHeight{};
 
 	//body/team colors
 	Elite::Color m_Blue{ 0, 0, 1.f };
 	Elite::Color m_Red{ 1.f, 0, 0 };
 
 	float m_AttackRange{};
-
+	float m_TotalBattleTime{};
 	//static inline const char* m_pFormations[]{ "Form A", "Form B", "Form C" };
 
 	int m_BlueFormationIdx{};
@@ -108,8 +115,11 @@ private:
 	// private functions
 	float* GetBlueWeight(ISteeringBehavior* pBehaviour);
 	float* GetRedWeight(ISteeringBehavior* pBehaviour);
-	
-	void SetAgentTarget(SteeringAgent* pSteeringAgent,const TargetData& targetdata);
+
+	void SpawnBlueFormation();
+	void SpawnRedFormation();
+
+	void SetAgentTarget(SteeringAgent* pSteeringAgent, const TargetData& targetdata);
 
 private:
 	Flock(const Flock& other);

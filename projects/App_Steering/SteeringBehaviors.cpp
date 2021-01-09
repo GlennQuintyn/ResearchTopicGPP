@@ -226,6 +226,12 @@ SteeringOutput Attack::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 	SteeringOutput steering = {};
 	SteeringAgent* pClosestEnemy = m_pFlock->GetClosestEnemy(pAgent->GetPosition(), pAgent->GetBodyColor());
 
+	if (pClosestEnemy == nullptr)
+	{
+		steering.IsValid = false;
+		return steering;
+	}
+
 	//if in hit range AND alive do attack logic
 	if (pClosestEnemy->IsAlive() && Elite::DistanceSquared(pAgent->GetPosition(), pClosestEnemy->GetPosition()) <= m_HitRange * m_HitRange)
 	{

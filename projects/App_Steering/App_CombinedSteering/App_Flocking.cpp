@@ -58,6 +58,6 @@ void App_Flocking::Render(float deltaTime) const
 	DEBUGRENDERER2D->DrawPolygon(&points[0], 4, { 1,0,0,1 }, 0.4f);
 
 	//Render Target
-	if (m_VisualizeMouseTarget)
-		DEBUGRENDERER2D->DrawSolidCircle(m_MouseTargetLclick.Position, 0.3f, { 0.f,0.f }, { 1.f,0.f,0.f }, -0.8f);
+	//if (m_VisualizeMouseTarget)
+	//	DEBUGRENDERER2D->DrawSolidCircle(m_MouseTargetLclick.Position, 0.3f, { 0.f,0.f }, { 1.f,0.f,0.f }, -0.8f);
 }

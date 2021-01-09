@@ -5,6 +5,7 @@
 #include "CombinedSteeringBehaviors.h"
 #include "FlockingSteeringBehaviors.h"
 #include "SpacePartitioning.h"
+#include <iomanip>
 
 using namespace Elite;
 
@@ -26,11 +27,11 @@ Flock::Flock(int blueAgents, int redAgents, float worldSize, SteeringAgent* pAge
 {
 	//m_pWanderEvader = nullptr;
 
-	float spawnWidth{ worldSize / 5.f };
-	float spawnHeight{ worldSize / 4.f };
+	m_SpawnWidth = { worldSize / 5.f };
+	m_SpawnHeight = { worldSize / 4.f };
 
-	m_BlueSpawnZone = { {worldSize / 8.f, (worldSize / 2.f) - (spawnHeight / 2.f)},spawnWidth, spawnHeight };
-	m_RedSpawnZone = { {(worldSize * 7.f / 8.f) - spawnWidth, (worldSize / 2.f) - (spawnHeight / 2.f)}, spawnWidth, spawnHeight };
+	m_BlueSpawnZone = { {worldSize / 8.f, (worldSize / 2.f) - (m_SpawnHeight / 2.f)},m_SpawnWidth, m_SpawnHeight };
+	m_RedSpawnZone = { {(worldSize * 7.f / 8.f) - m_SpawnWidth, (worldSize / 2.f) - (m_SpawnHeight / 2.f)}, m_SpawnWidth, m_SpawnHeight };
 
 	//evade agenet andd its behavior
 	//m_pWanderEvader = new Wander();
@@ -72,32 +73,35 @@ Flock::Flock(int blueAgents, int redAgents, float worldSize, SteeringAgent* pAge
 	//spacial partitioning
 	m_pSpacePartitioning = new CellSpace(worldSize, worldSize, int(worldSize / m_NeighborhoodRadius), int(worldSize / m_NeighborhoodRadius), m_BlueGroupSize);
 
-	//init each agent
-	for (int i = 0; i < m_BlueGroupSize; i++)
-	{
-		m_BlueAgents.push_back(new SteeringAgent{});
-		m_BlueAgents[i]->SetPosition({ Elite::randomFloat(m_BlueSpawnZone.bottomLeft.x,m_BlueSpawnZone.bottomLeft.x + spawnWidth), Elite::randomFloat(m_BlueSpawnZone.bottomLeft.y,m_BlueSpawnZone.bottomLeft.y + spawnHeight) });
-		m_BlueAgents[i]->SetMaxLinearSpeed(35.f);
-		m_BlueAgents[i]->SetAutoOrient(true);
-		m_BlueAgents[i]->SetMass(1.f);
-		m_BlueAgents[i]->SetSteeringBehavior(m_pBluePrioritySteering);
-		m_BlueAgents[i]->SetBodyColor(m_Blue);
-		m_pSpacePartitioning->AddAgent(m_BlueAgents[i]);
-		m_OldAgentPosVec.push_back(m_BlueAgents[i]->GetPosition());
-	}
+	SpawnBlueFormation();
+	SpawnRedFormation();
 
-	for (int i = 0; i < m_RedGroupSize; i++)
-	{
-		m_RedAgents.push_back(new SteeringAgent{});
-		m_RedAgents[i]->SetPosition({ Elite::randomFloat(m_RedSpawnZone.bottomLeft.x,m_RedSpawnZone.bottomLeft.x + spawnWidth), Elite::randomFloat(m_RedSpawnZone.bottomLeft.y,m_RedSpawnZone.bottomLeft.y + spawnHeight) });
-		m_RedAgents[i]->SetMaxLinearSpeed(35.f);
-		m_RedAgents[i]->SetAutoOrient(true);
-		m_RedAgents[i]->SetMass(1.f);
-		m_RedAgents[i]->SetSteeringBehavior(m_pRedPrioritySteering);
-		m_RedAgents[i]->SetBodyColor(m_Red);
-		m_pSpacePartitioning->AddAgent(m_RedAgents[i]);
-		m_OldAgentPosVec.push_back(m_RedAgents[i]->GetPosition());
-	}
+	////init each agent
+	//for (int i = 0; i < m_BlueGroupSize; i++)
+	//{
+	//	m_BlueAgents.push_back(new SteeringAgent{});
+	//	m_BlueAgents[i]->SetPosition({ Elite::randomFloat(m_BlueSpawnZone.bottomLeft.x,m_BlueSpawnZone.bottomLeft.x + spawnWidth), Elite::randomFloat(m_BlueSpawnZone.bottomLeft.y,m_BlueSpawnZone.bottomLeft.y + spawnHeight) });
+	//	m_BlueAgents[i]->SetMaxLinearSpeed(35.f);
+	//	m_BlueAgents[i]->SetAutoOrient(true);
+	//	m_BlueAgents[i]->SetMass(1.f);
+	//	m_BlueAgents[i]->SetSteeringBehavior(m_pBluePrioritySteering);
+	//	m_BlueAgents[i]->SetBodyColor(m_Blue);
+	//	m_pSpacePartitioning->AddAgent(m_BlueAgents[i]);
+	//	m_OldAgentPosVec.push_back(m_BlueAgents[i]->GetPosition());
+	//}
+
+	//for (int i = 0; i < m_RedGroupSize; i++)
+	//{
+	//	m_RedAgents.push_back(new SteeringAgent{});
+	//	m_RedAgents[i]->SetPosition({ Elite::randomFloat(m_RedSpawnZone.bottomLeft.x,m_RedSpawnZone.bottomLeft.x + spawnWidth), Elite::randomFloat(m_RedSpawnZone.bottomLeft.y,m_RedSpawnZone.bottomLeft.y + spawnHeight) });
+	//	m_RedAgents[i]->SetMaxLinearSpeed(35.f);
+	//	m_RedAgents[i]->SetAutoOrient(true);
+	//	m_RedAgents[i]->SetMass(1.f);
+	//	m_RedAgents[i]->SetSteeringBehavior(m_pRedPrioritySteering);
+	//	m_RedAgents[i]->SetBodyColor(m_Red);
+	//	m_pSpacePartitioning->AddAgent(m_RedAgents[i]);
+	//	m_OldAgentPosVec.push_back(m_RedAgents[i]->GetPosition());
+	//}
 }
 
 Flock::~Flock()
@@ -136,6 +140,9 @@ void Flock::Update(float deltaT, float worldSize, const TargetData& targetDataLc
 {
 	bool firstTime{ true };
 	TargetData agentToEvadeDate{};
+
+	//m_TotalBattleTime += deltaT;
+
 	//agentToEvadeDate.Position = m_pAgentToEvade->GetPosition();
 	//agentToEvadeDate.LinearVelocity = m_pAgentToEvade->GetLinearVelocity();
 
@@ -166,7 +173,7 @@ void Flock::Update(float deltaT, float worldSize, const TargetData& targetDataLc
 	DEBUGRENDERER2D->DrawPoint(redTargetData.Position, 4.5f, m_Red, .01f);
 
 
-	float agentSize{ m_BlueAgents[0]->GetRadius() * 4 };
+	float agentSize{ SteeringAgent{}.GetRadius()/*  m_BlueAgents[0]->GetRadius() */ * 4 };
 	int index{};
 	for (SteeringAgent* steeringAgent : m_BlueAgents)
 	{
@@ -225,7 +232,8 @@ void Flock::Update(float deltaT, float worldSize, const TargetData& targetDataLc
 		index++;
 	}
 
-
+	if (m_BlueAgents.size() != 0 && m_RedAgents.size() != 0)
+		m_TotalBattleTime += deltaT;
 
 }
 
@@ -263,20 +271,25 @@ void Flock::Render(float deltaT) const
 
 void Flock::UpdateAndRenderUI()
 {
+	int blueOldFormationIndx{ m_BlueFormationIdx };
+	int redOldFormationIndx{ m_RedFormationIdx };
+
+#pragma region Left Side Window
 	//Setup
-	int menuWidth = 235;
+	int leftMenuWidth = 235;
 	int const width = DEBUGRENDERER2D->GetActiveCamera()->GetWidth();
 	int const height = DEBUGRENDERER2D->GetActiveCamera()->GetHeight();
 	bool windowActive = true;
-	ImGui::SetNextWindowPos(ImVec2((float)width - menuWidth - 10, 10));
-	ImGui::SetNextWindowSize(ImVec2((float)menuWidth, (float)height - 20));
+	ImGui::SetNextWindowPos(ImVec2((float)width - leftMenuWidth - 10, 10));
+	ImGui::SetNextWindowSize(ImVec2((float)leftMenuWidth, (float)height - 20));
 	ImGui::Begin("Gameplay Programming", &windowActive, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 	ImGui::PushAllowKeyboardFocus(false);
 
 	//Elements
 	ImGui::Text("CONTROLS");
 	ImGui::Indent();
-	//ImGui::Text("LMB: place target");
+	//ImGui::Text("LMB: place blue Team Center");
+	//ImGui::Text("MMB: place red Team Center");
 	ImGui::Text("RMB: move cam.");
 	ImGui::Text("Scrollwheel: zoom cam.");
 	ImGui::Unindent();
@@ -286,7 +299,7 @@ void Flock::UpdateAndRenderUI()
 	ImGui::Spacing();
 	//ImGui::Spacing();
 
-	//ImGui::Text("STATS");
+
 	ImGui::Indent();
 	ImGui::Text("%.3f ms/frame", 1000.0f / ImGui::GetIO().Framerate);
 	ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
@@ -338,16 +351,113 @@ void Flock::UpdateAndRenderUI()
 	//*GetRedWeight(m_pBlueSeekBehavior) = *GetBlueWeight(m_pBlueSeekBehavior);
 	//ImGui::SliderFloat("Wander", GetWeight(m_pWanderBehavior), 0.f, 1.f, "%.2f");
 	ImGui::Spacing();
+
 	bool buttonReturn = ImGui::Button("ATTACK", { 75.f,25.f });
 
 	//End
 	ImGui::PopAllowKeyboardFocus();
 	ImGui::End();
+#pragma endregion
+
+
+	if (m_BlueAgents.size() == 0 && m_RedAgents.size() != 0)
+	{
+		//Setup
+		int endScreenMenuWidth = 250;
+		int endScreenMenuHeight = 125;
+		int const width = DEBUGRENDERER2D->GetActiveCamera()->GetWidth() - leftMenuWidth;
+		int const height = DEBUGRENDERER2D->GetActiveCamera()->GetHeight();
+		bool windowActive = true;
+		ImGui::SetNextWindowPos(ImVec2(((float)width / 2.f) - (endScreenMenuWidth / 2.f), ((float)height / 2.f) - endScreenMenuHeight));
+		ImGui::SetNextWindowSize(ImVec2((float)endScreenMenuWidth, (float)endScreenMenuHeight));
+		ImGui::Begin("Game Over", &windowActive, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+		ImGui::PushAllowKeyboardFocus(false);
+
+
+		//ImGui::Text("Blue Team formation");
+		ImGui::Indent();
+		ImGui::Indent();
+		ImGui::Spacing();
+		ImGui::Text("RED TEAM HAS WON!");
+		ImGui::Spacing();
+		ImGui::Unindent();
+		ImGui::Unindent();
+		ImGui::Separator();
+
+		ImGui::Spacing();
+		ImGui::Text("STATS:");
+		ImGui::Spacing();
+		ImGui::Indent();
+		std::stringstream endStatsStream{};
+		endStatsStream << "Survivor Count: " << m_RedAgents.size();
+		ImGui::Text(endStatsStream.str().c_str());
+		endStatsStream.str(std::string());
+		endStatsStream << "Battle Duration: " << std::fixed << std::setprecision(2) << m_TotalBattleTime << " seconds";
+		ImGui::Text(endStatsStream.str().c_str());
+		ImGui::Unindent();
+
+		//End
+		ImGui::PopAllowKeyboardFocus();
+		ImGui::End();
+	}
+
+	if (m_BlueAgents.size() != 0 && m_RedAgents.size() == 0)
+	{
+		//Setup
+		int endScreenMenuWidth = 250;
+		int endScreenMenuHeight = 125;
+		int const width = DEBUGRENDERER2D->GetActiveCamera()->GetWidth() - leftMenuWidth;
+		int const height = DEBUGRENDERER2D->GetActiveCamera()->GetHeight();
+		bool windowActive = true;
+		ImGui::SetNextWindowPos(ImVec2(((float)width / 2.f) - (endScreenMenuWidth / 2.f), ((float)height / 2.f) - endScreenMenuHeight));
+		ImGui::SetNextWindowSize(ImVec2((float)endScreenMenuWidth, (float)endScreenMenuHeight));
+		ImGui::Begin("Game Over", &windowActive, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+		ImGui::PushAllowKeyboardFocus(false);
+
+
+		//ImGui::Text("Blue Team formation");
+		ImGui::Indent();
+		ImGui::Indent();
+		ImGui::Spacing();
+		ImGui::Text("BLUE TEAM HAS WON!");
+		ImGui::Spacing();
+		ImGui::Unindent();
+		ImGui::Unindent();
+		ImGui::Separator();
+
+		ImGui::Spacing();
+		ImGui::Text("STATS:");
+		ImGui::Spacing();
+		ImGui::Indent();
+		std::stringstream endStatsStream{};
+		endStatsStream << "Survivor Count: " << m_BlueAgents.size();
+		ImGui::Text(endStatsStream.str().c_str());
+		endStatsStream.str(std::string());
+		endStatsStream << "Battle Duration: " << std::fixed << std::setprecision(2) << m_TotalBattleTime << " seconds";
+		ImGui::Text(endStatsStream.str().c_str());
+		ImGui::Unindent();
+
+		//End
+		ImGui::PopAllowKeyboardFocus();
+		ImGui::End();
+	}
+
 
 	//flip attack button to true if button was pressed once
 	if (buttonReturn)
 	{
 		m_Attack = true;
+		m_TotalBattleTime = 0;
+	}
+
+	if (m_BlueFormationIdx != blueOldFormationIndx)
+	{
+		SpawnBlueFormation();
+	}
+
+	if (m_RedFormationIdx != redOldFormationIndx)
+	{
+		SpawnRedFormation();
 	}
 }
 
@@ -382,7 +492,8 @@ void Flock::RegisterRedNeighbours(SteeringAgent* pAgent)
 SteeringAgent* Flock::GetClosestEnemy(const Elite::Vector2& agentPos, const Elite::Color& color) const
 {
 	float shortestDistance{ FLT_MAX };
-	int index{}, count{};
+	int index{};// , count{};
+	SteeringAgent* pReturnAgent{ nullptr };
 
 	if (color == m_Blue)
 	{
@@ -392,12 +503,12 @@ SteeringAgent* Flock::GetClosestEnemy(const Elite::Vector2& agentPos, const Elit
 			if (squaredDistance <= shortestDistance * shortestDistance && steeringAgent->IsAlive())
 			{
 				shortestDistance = squaredDistance;
-				index = count;
+				pReturnAgent = m_RedAgents[index];
 			}
-			++count;
+			++index;
 		}
 
-		return m_RedAgents[index];
+		return pReturnAgent;
 	}
 	else
 	{
@@ -407,12 +518,12 @@ SteeringAgent* Flock::GetClosestEnemy(const Elite::Vector2& agentPos, const Elit
 			if (squaredDistance <= shortestDistance * shortestDistance && steeringAgent->IsAlive())
 			{
 				shortestDistance = squaredDistance;
-				index = count;
+				pReturnAgent = m_BlueAgents[index];
 			}
-			++count;
+			++index;
 		}
 
-		return m_BlueAgents[index];
+		return pReturnAgent;
 	}
 }
 
@@ -547,6 +658,95 @@ float* Flock::GetRedWeight(ISteeringBehavior* pBehavior)
 	}
 
 	return nullptr;
+}
+
+void Flock::SpawnBlueFormation()
+{
+	Formations blueFormation{ Formations(m_BlueFormationIdx) };
+
+	switch (blueFormation)
+	{
+	case Formations::FormA:
+	{
+		for (SteeringAgent* steeringAgent : m_BlueAgents)
+		{
+			SAFE_DELETE(steeringAgent);
+		}
+
+		m_BlueAgents.clear();
+
+		//init each agent
+		for (int i = 0; i < m_BlueGroupSize; i++)
+		{
+			m_BlueAgents.push_back(new SteeringAgent{});
+			m_BlueAgents[i]->SetPosition({ Elite::randomFloat(m_BlueSpawnZone.bottomLeft.x,m_BlueSpawnZone.bottomLeft.x + m_SpawnWidth), Elite::randomFloat(m_BlueSpawnZone.bottomLeft.y,m_BlueSpawnZone.bottomLeft.y + m_SpawnHeight) });
+			m_BlueAgents[i]->SetMaxLinearSpeed(35.f);
+			m_BlueAgents[i]->SetAutoOrient(true);
+			m_BlueAgents[i]->SetMass(1.f);
+			m_BlueAgents[i]->SetSteeringBehavior(m_pBluePrioritySteering);
+			m_BlueAgents[i]->SetBodyColor(m_Blue);
+			m_pSpacePartitioning->AddAgent(m_BlueAgents[i]);
+			m_OldAgentPosVec.push_back(m_BlueAgents[i]->GetPosition());
+		}
+	}
+	break;
+	case Formations::FormB:
+	{
+		for (SteeringAgent* steeringAgent : m_BlueAgents)
+		{
+			SAFE_DELETE(steeringAgent);
+		}
+
+		m_BlueAgents.clear();
+	}
+	break;
+	}
+
+
+}
+
+void Flock::SpawnRedFormation()
+{
+	Formations redFormation{ Formations(m_RedFormationIdx) };
+
+	switch (redFormation)
+	{
+	case Formations::FormA:
+	{
+		for (SteeringAgent* steeringAgent : m_RedAgents)
+		{
+			SAFE_DELETE(steeringAgent);
+		}
+
+		m_RedAgents.clear();
+
+		for (int i = 0; i < m_RedGroupSize; i++)
+		{
+			m_RedAgents.push_back(new SteeringAgent{});
+			m_RedAgents[i]->SetPosition({ Elite::randomFloat(m_RedSpawnZone.bottomLeft.x,m_RedSpawnZone.bottomLeft.x + m_SpawnWidth), Elite::randomFloat(m_RedSpawnZone.bottomLeft.y,m_RedSpawnZone.bottomLeft.y + m_SpawnHeight) });
+			m_RedAgents[i]->SetMaxLinearSpeed(35.f);
+			m_RedAgents[i]->SetAutoOrient(true);
+			m_RedAgents[i]->SetMass(1.f);
+			m_RedAgents[i]->SetSteeringBehavior(m_pRedPrioritySteering);
+			m_RedAgents[i]->SetBodyColor(m_Red);
+			m_pSpacePartitioning->AddAgent(m_RedAgents[i]);
+			m_OldAgentPosVec.push_back(m_RedAgents[i]->GetPosition());
+		}
+	}
+	break;
+	case Formations::FormB:
+	{
+		for (SteeringAgent* steeringAgent : m_RedAgents)
+		{
+			SAFE_DELETE(steeringAgent);
+		}
+
+		m_RedAgents.clear();
+	}
+	break;
+	}
+
+
 }
 
 //this functions set the seek target of a specific agent
