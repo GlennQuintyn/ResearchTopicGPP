@@ -56,10 +56,10 @@ Flock::Flock(int blueAgents, int redAgents, float worldSize, SteeringAgent* pAge
 	//	, { m_pVelMathcBehavior,0.25f } , { m_pSeekBehavior,0.25f } , {m_pWanderBehavior ,0.25f } });//implicit vetor of weighted behavior
 
 	m_pBlueBlendedSteering = new BlendedSteering({ { m_pSperationBehavior, 0.54f }, { m_pCohesionBehavior, 0.55f }
-		, { m_pVelMathcBehavior, 0.75f } , { m_pBlueSeekBehavior, 0.9f } });//implicit vetor of weighted behavior
+		, { m_pVelMathcBehavior, 0.35f } , { m_pBlueSeekBehavior, 0.9f } });//implicit vetor of weighted behavior
 
 	m_pRedBlendedSteering = new BlendedSteering({ { m_pSperationBehavior, 0.54f }, { m_pCohesionBehavior, 0.55f }
-		, { m_pVelMathcBehavior, 0.75f } , { m_pRedSeekBehavior, .9f } });//implicit vetor of weighted behavior
+		, { m_pVelMathcBehavior, 0.35f } , { m_pRedSeekBehavior, .9f } });//implicit vetor of weighted behavior
 
 	//behaviors for priority steering
 	m_pEvadeBehavior = new Evade();
@@ -172,6 +172,14 @@ void Flock::Update(float deltaT, float worldSize, const TargetData& targetDataLc
 	{
 		m_NrOfBlueNeighbors = 0;
 
+		//if agent is dead go to the next agent
+		if (!steeringAgent->IsAlive())
+		{
+			steeringAgent->Update(deltaT);
+			steeringAgent->TrimToWorld({ 0,0 }, { worldSize ,worldSize });
+			continue;
+		}
+
 		blueTargetData.Position = { m_BlueCenterPos.x - (agentSize * 2.5f) + (agentSize * (index % 6)) ,m_BlueCenterPos.y + (agentSize * 2.5f) - (agentSize * (index / 6)) };
 
 		SetAgentTarget(steeringAgent, blueTargetData);
@@ -184,35 +192,7 @@ void Flock::Update(float deltaT, float worldSize, const TargetData& targetDataLc
 		steeringAgent->Update(deltaT);
 		steeringAgent->TrimToWorld({ 0,0 }, { worldSize ,worldSize });
 
-		//if (m_EnablePartitioning)//bool to toggle spacial partition
-		//{
-		//	m_pSpacePartitioning->RegisterNeighbors(steeringAgent->GetPosition(), m_NeighborhoodRadius, m_DebugRenderPartitions, firstTime);
-		//	m_Neighbors = m_pSpacePartitioning->GetNeighbors();
-		//	m_NrOfNeighbors = m_pSpacePartitioning->GetNrOfNeighbors();
-		//}
-		//else
-		//{
-		//}
-		//if (m_EnablePartitioning)//bool to toggle spacial partition
-		//{
-		//	m_pSpacePartitioning->UpdateAgentCell(steeringAgent, m_OldAgentPosVec[index]);
-		//	m_OldAgentPosVec[index] = steeringAgent->GetPosition();
-		//}
-
 		steeringAgent->SetRenderBehavior(m_DebugRenderSteering);
-		if (firstTime)
-		{
-			if (m_DebugRenderNeighborhood)
-			{
-				DEBUGRENDERER2D->DrawCircle(m_BlueAgents[0]->GetPosition(), m_NeighborhoodRadius, { 1,1,1 }, .5f);
-				m_BlueAgents[0]->SetRenderBehavior(true);
-				for (int index{}; index < m_NrOfBlueNeighbors; ++index)
-				{
-					//m_Neighbors[index]->SetBodyColor({ 0, 1, 0 });
-				}
-			}
-			firstTime = false;
-		}
 
 		index++;
 	}
@@ -222,6 +202,14 @@ void Flock::Update(float deltaT, float worldSize, const TargetData& targetDataLc
 	{
 		m_NrOfRedNeighbors = 0;
 
+		//if agent is dead do small update and go to the next agent
+		if (!steeringAgent->IsAlive())
+		{
+			steeringAgent->Update(deltaT);
+			steeringAgent->TrimToWorld({ 0,0 }, { worldSize ,worldSize });
+			continue;
+		}
+
 		redTargetData.Position = { m_RedCenterPos.x - (agentSize * 2.5f) + (agentSize * (index % 6)) ,m_RedCenterPos.y + (agentSize * 2.5f) - (agentSize * (index / 6)) };
 
 		SetAgentTarget(steeringAgent, redTargetData);
@@ -230,13 +218,8 @@ void Flock::Update(float deltaT, float worldSize, const TargetData& targetDataLc
 
 		RegisterRedNeighbours(steeringAgent);
 
-
-
-		//m_pEvadeBehavior->SetTarget(agentToEvadeDate);
-
 		steeringAgent->Update(deltaT);
 		steeringAgent->TrimToWorld({ 0,0 }, { worldSize ,worldSize });
-
 
 		steeringAgent->SetRenderBehavior(m_DebugRenderSteering);
 		index++;
@@ -258,12 +241,6 @@ void Flock::Render(float deltaT) const
 	{
 		steeringAgent->Render(deltaT);
 	}
-
-	/*if (m_EnablePartitioning)
-	{
-		m_pSpacePartitioning->RenderCells();
-	}*/
-
 
 	//drawing their spawn zones
 	std::vector<Elite::Vector2> Vec(4);//max of 4 point to polygon available
@@ -381,7 +358,7 @@ void Flock::RegisterBlueNeighbours(SteeringAgent* pAgent)
 	for (SteeringAgent* steeringAgent : m_BlueAgents)
 	{
 		if (Elite::DistanceSquared(pAgent->GetPosition(), steeringAgent->GetPosition()) <= m_NeighborhoodRadius * m_NeighborhoodRadius &&
-			(pAgent->GetPosition() != steeringAgent->GetPosition()))
+			(pAgent->GetPosition() != steeringAgent->GetPosition()) && steeringAgent->IsAlive())
 		{
 			m_BlueNeighbors[m_NrOfBlueNeighbors] = steeringAgent;
 			m_NrOfBlueNeighbors++;
@@ -394,7 +371,7 @@ void Flock::RegisterRedNeighbours(SteeringAgent* pAgent)
 	for (SteeringAgent* steeringAgent : m_RedAgents)
 	{
 		if (Elite::DistanceSquared(pAgent->GetPosition(), steeringAgent->GetPosition()) <= m_NeighborhoodRadius * m_NeighborhoodRadius &&
-			(pAgent->GetPosition() != steeringAgent->GetPosition()))
+			(pAgent->GetPosition() != steeringAgent->GetPosition()) && steeringAgent->IsAlive())
 		{
 			m_RedNeighbors[m_NrOfRedNeighbors] = steeringAgent;
 			m_NrOfRedNeighbors++;
@@ -402,7 +379,7 @@ void Flock::RegisterRedNeighbours(SteeringAgent* pAgent)
 	}
 }
 
-Elite::Vector2 Flock::GetClosestEnemyLocation(const Elite::Vector2& agentPos, const Elite::Color& color) const
+SteeringAgent* Flock::GetClosestEnemy(const Elite::Vector2& agentPos, const Elite::Color& color) const
 {
 	float shortestDistance{ FLT_MAX };
 	int index{}, count{};
@@ -412,7 +389,7 @@ Elite::Vector2 Flock::GetClosestEnemyLocation(const Elite::Vector2& agentPos, co
 		for (SteeringAgent* steeringAgent : m_RedAgents)
 		{
 			float squaredDistance{ Elite::DistanceSquared(agentPos, steeringAgent->GetPosition()) };
-			if (squaredDistance <= shortestDistance * shortestDistance)
+			if (squaredDistance <= shortestDistance * shortestDistance && steeringAgent->IsAlive())
 			{
 				shortestDistance = squaredDistance;
 				index = count;
@@ -420,14 +397,14 @@ Elite::Vector2 Flock::GetClosestEnemyLocation(const Elite::Vector2& agentPos, co
 			++count;
 		}
 
-		return m_RedAgents[index]->GetPosition();
+		return m_RedAgents[index];
 	}
 	else
 	{
 		for (SteeringAgent* steeringAgent : m_BlueAgents)
 		{
 			float squaredDistance{ Elite::DistanceSquared(agentPos, steeringAgent->GetPosition()) };
-			if (squaredDistance <= shortestDistance * shortestDistance)
+			if (squaredDistance <= shortestDistance * shortestDistance && steeringAgent->IsAlive())
 			{
 				shortestDistance = squaredDistance;
 				index = count;
@@ -435,7 +412,7 @@ Elite::Vector2 Flock::GetClosestEnemyLocation(const Elite::Vector2& agentPos, co
 			++count;
 		}
 
-		return m_BlueAgents[index]->GetPosition();
+		return m_BlueAgents[index];
 	}
 }
 
@@ -447,7 +424,7 @@ Elite::Vector2 Flock::GetAverageBlueNeighborPos(const Elite::Color& color) const
 	for (int index{}; index < m_NrOfBlueNeighbors; ++index)
 	{
 		//check if colors are equal
-		if (m_BlueNeighbors[index]->GetBodyColor() == color)
+		if (m_BlueNeighbors[index]->GetBodyColor() == color && m_BlueNeighbors[index]->IsAlive())
 		{
 			averagePos += m_BlueNeighbors[index]->GetPosition();
 			++count;
@@ -470,7 +447,7 @@ Elite::Vector2 Flock::GetAverageRedNeighborPos(const Elite::Color& color) const
 	for (int index{}; index < m_NrOfRedNeighbors; ++index)
 	{
 		//check if colors are equal
-		if (m_RedNeighbors[index]->GetBodyColor() == color)
+		if (m_RedNeighbors[index]->GetBodyColor() == color && m_RedNeighbors[index]->IsAlive())
 		{
 			averagePos += m_RedNeighbors[index]->GetPosition();
 			++count;
@@ -493,7 +470,7 @@ Elite::Vector2 Flock::GetAverageBlueNeighborVelocity(const Elite::Color& color) 
 	for (int index{}; index < m_NrOfBlueNeighbors; ++index)
 	{
 		//check if colors are equal
-		if (m_BlueNeighbors[index]->GetBodyColor() == color)
+		if (m_BlueNeighbors[index]->GetBodyColor() == color && m_BlueNeighbors[index]->IsAlive())
 		{
 			averageVelocity += m_BlueNeighbors[index]->GetLinearVelocity();
 			++count;
@@ -516,7 +493,7 @@ Elite::Vector2 Flock::GetAverageRedNeighborVelocity(const Elite::Color& color) c
 	for (int index{}; index < m_NrOfRedNeighbors; ++index)
 	{
 		//check if colors are equal
-		if (m_RedNeighbors[index]->GetBodyColor() == color)
+		if (m_RedNeighbors[index]->GetBodyColor() == color && m_RedNeighbors[index]->IsAlive())
 		{
 			averageVelocity += m_RedNeighbors[index]->GetLinearVelocity();
 			++count;

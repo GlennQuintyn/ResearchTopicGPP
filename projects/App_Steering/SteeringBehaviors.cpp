@@ -224,16 +224,33 @@ SteeringOutput Evade::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 SteeringOutput Attack::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 {
 	SteeringOutput steering = {};
-	Elite::Vector2 closestEnemyPos = m_pFlock->GetClosestEnemyLocation(pAgent->GetPosition(), pAgent->GetBodyColor());
-	if (Elite::Distance(pAgent->GetPosition(), closestEnemyPos) >= m_AttackRadius)
+	SteeringAgent* pClosestEnemy = m_pFlock->GetClosestEnemy(pAgent->GetPosition(), pAgent->GetBodyColor());
+
+	//if in hit range AND alive do attack logic
+	if (pClosestEnemy->IsAlive() && Elite::DistanceSquared(pAgent->GetPosition(), pClosestEnemy->GetPosition()) <= m_HitRange * m_HitRange)
 	{
+		//do attack logic
+		if (pAgent->Attack())
+		{
+			std::cout << "\nATTACK\n\n";
+			//if agent can attack damage closest enemy
+			pClosestEnemy->TakeDamage(pAgent->DamgeValue());
+
+			//steering.LinearVelocity = {};	
+		}
+		//if in attacking range stop moving
+		return steering;
+	}
+	//if not check if still within chasing range or not alive
+	else if ((!pClosestEnemy->IsAlive())||Elite::DistanceSquared(pAgent->GetPosition(), pClosestEnemy->GetPosition()) >= m_AttackRadius * m_AttackRadius)
+	{
+		//if in range or
 		steering.IsValid = false;
 		return steering;
 	}
 
-	//closestEnemyPos = m_pFlock->GetClosestEnemyLocation(pAgent->GetPosition(), pAgent->GetBodyColor());
-
-	steering.LinearVelocity = closestEnemyPos - pAgent->GetPosition(); //Desired Velocity
+	//if atleast in chase range do target calculations
+	steering.LinearVelocity = pClosestEnemy->GetPosition() - pAgent->GetPosition(); //Desired Velocity
 	steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
 	steering.LinearVelocity *= pAgent->GetMaxLinearSpeed(); //Rescale to Max Speed
 

@@ -44,12 +44,35 @@ public:
 	void SetRenderBehavior(bool isEnabled) { m_RenderBehavior = isEnabled; }
 	bool CanRenderBehavior() const { return m_RenderBehavior; }
 
+	//extra added fucntions
+
+
+	//returns if attack was possible or not and puts attack on cooldown
+	bool Attack();
+	//process damage value
+	void TakeDamage(float damage);
+
+	//returns the amount of damage the agent can do
+	float DamgeValue() { return m_Damage; };
+
+	bool IsAlive() { return m_Alive; };
+
 private:
 	//--- Datamembers ---
 	ISteeringBehavior* m_pSteeringBehavior = nullptr;
 
-	float m_MaxLinearSpeed = 10.f;
+	float m_MaxLinearSpeed = 5.f;
 	float m_MaxAngularSpeed = 10.f;
+
+	float m_Health = 20.f;
+	float m_Damage = 5.f;
+
+	float m_AttackDelay{ 2.f };
+	float m_TotalTime{};
+
+	bool m_CanAttack = true;
+	bool m_Alive = true;
+
 	bool m_AutoOrient = false;
 	bool m_RenderBehavior = false;
 };

@@ -25,7 +25,7 @@ public:
 	int GetNrOfBlueNeighbors() const { return m_NrOfBlueNeighbors; }
 	int GetNrOfRedNeighbors() const { return m_NrOfRedNeighbors; }
 	
-	Elite::Vector2 GetClosestEnemyLocation(const Elite::Vector2& agentPos,const Elite::Color& color) const;
+	SteeringAgent* GetClosestEnemy(const Elite::Vector2& agentPos,const Elite::Color& color) const;
 	//Elite::Vector2 GetNrOfRedNeighbors() const { return m_NrOfRedNeighbors; }
 
 	const vector<SteeringAgent*>& GetBlueNeighbors() const { return m_BlueNeighbors; }

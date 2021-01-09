@@ -171,11 +171,11 @@ public:
 	SteeringOutput CalculateSteering(float deltaT, SteeringAgent* pAgent) override;
 
 	void SetAttackRadius(float radius) { m_AttackRadius = radius; }
-	//void SetPredictionRange(float range) { m_EvadePredRange = range; }
+	void SetHitRange(float range) { m_HitRange = range; }
 
 private:
 	float m_AttackRadius = 20.f;
-	//float m_EvadePredRange = 5.f;
+	float m_HitRange = 5.f;
 
 	Flock* m_pFlock = nullptr;
 	Elite::Color m_Blue{ 0, 0, 1.f };
