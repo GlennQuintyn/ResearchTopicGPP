@@ -7,9 +7,14 @@
 #include "Flock.h"
 
 App_Flocking::App_Flocking()
+	: m_Flock{ m_BlueSpawnZone, m_RedSpawnZone, m_TrimWorldSize, true }
 {
-	m_MouseTargetLclick.Position = { m_TrimWorldSize / 5.f, m_TrimWorldSize / 2.f };
-	m_MouseTargetRclick.Position = { m_TrimWorldSize * 4.f / 5.f, m_TrimWorldSize / 2.f };
+
+	//m_MouseTargetLclick.Position = { m_TrimWorldSize / 5.f, m_TrimWorldSize / 2.f };
+	//m_MouseTargetRclick.Position = { m_TrimWorldSize * 4.f / 5.f, m_TrimWorldSize / 2.f };
+
+	m_MouseTargetLclick.Position = { m_BlueSpawnZone.bottomLeft.x + (m_BlueSpawnZone.width / 2.f),m_BlueSpawnZone.bottomLeft.y + (m_BlueSpawnZone.height / 2.f) };
+	m_MouseTargetRclick.Position = { m_RedSpawnZone.bottomLeft.x + m_RedSpawnZone.width / 2.f,m_RedSpawnZone.bottomLeft.y + m_RedSpawnZone.height / 2.f };
 }
 
 //Destructor
@@ -31,13 +36,23 @@ void App_Flocking::Update(float deltaTime)
 	if (INPUTMANAGER->IsMouseButtonUp(InputMouseButton::eLeft) && m_VisualizeMouseTarget)
 	{
 		auto const mouseData = INPUTMANAGER->GetMouseData(InputType::eMouseButton, InputMouseButton::eLeft);
-		m_MouseTargetLclick.Position = DEBUGRENDERER2D->GetActiveCamera()->ConvertScreenToWorld({ static_cast<float>(mouseData.X), static_cast<float>(mouseData.Y) });
+		auto tempNewMousePos = DEBUGRENDERER2D->GetActiveCamera()->ConvertScreenToWorld({ static_cast<float>(mouseData.X), static_cast<float>(mouseData.Y) });
+
+		if (Elite::IsPointInRect(tempNewMousePos, m_BlueSpawnZone))
+		{
+			m_MouseTargetLclick.Position = tempNewMousePos;
+		}
 	}
 
 	if (INPUTMANAGER->IsMouseButtonUp(InputMouseButton::eMiddle) && m_VisualizeMouseTarget)
 	{
 		auto const mouseData = INPUTMANAGER->GetMouseData(InputType::eMouseButton, InputMouseButton::eMiddle);
-		m_MouseTargetRclick.Position = DEBUGRENDERER2D->GetActiveCamera()->ConvertScreenToWorld({ static_cast<float>(mouseData.X), static_cast<float>(mouseData.Y) });
+		auto tempNewMousePos = DEBUGRENDERER2D->GetActiveCamera()->ConvertScreenToWorld({ static_cast<float>(mouseData.X), static_cast<float>(mouseData.Y) });
+		
+		if (Elite::IsPointInRect(tempNewMousePos, m_RedSpawnZone))
+		{
+			m_MouseTargetRclick.Position = tempNewMousePos;
+		}
 	}
 
 	m_Flock.UpdateAndRenderUI();

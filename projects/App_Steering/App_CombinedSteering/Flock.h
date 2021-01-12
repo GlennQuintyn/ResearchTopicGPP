@@ -10,14 +10,16 @@ class CellSpace;
 
 enum class Formations
 {
-	FormA,
-	FormB
+	HalfPhalanx,
+	FlyingWedge,
+	WedgePhalanx,
+	Test
 };
 
 class Flock
 {
 public:
-	Flock(int blueAgents = 50, int redAgents = 50, float worldSize = 100.f, SteeringAgent* pAgentToEvade = nullptr, bool trimWorld = false);
+	Flock(const Elite::Rect& blueSpawnZone, const Elite::Rect& redSpawnZone, float worldSize = 100.f, bool trimWorld = false);
 
 	~Flock();
 
@@ -64,7 +66,10 @@ private:
 	int m_NrOfRedNeighbors = 0;
 
 	// evade target
-	SteeringAgent* m_pAgentToEvade = nullptr;
+	//SteeringAgent* m_pAgentToEvade = nullptr;
+
+	Elite::Vector2 m_BlueCenterPos{};
+	Elite::Vector2 m_RedCenterPos{};
 
 	// world info
 	bool m_TrimWorld = false;
@@ -99,7 +104,6 @@ private:
 
 	float m_AttackRange{};
 	float m_TotalBattleTime{};
-	//static inline const char* m_pFormations[]{ "Form A", "Form B", "Form C" };
 
 	int m_BlueFormationIdx{};
 	int m_RedFormationIdx{};
@@ -118,6 +122,12 @@ private:
 
 	void SpawnBlueFormation();
 	void SpawnRedFormation();
+
+	void UpdateBlue();
+	void UpdateRed();
+
+	void CalcFlyingWedgeXY(int index, float& xDistance, float& yDistance, bool Inverted = false);
+	void CalcWedgePhalanxXY(int index, float& xDistance, float& yDistance, bool Inverted = false);
 
 	void SetAgentTarget(SteeringAgent* pSteeringAgent, const TargetData& targetdata);
 

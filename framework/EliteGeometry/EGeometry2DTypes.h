@@ -173,6 +173,14 @@ namespace Elite
 
 		return true;
 	}
+
+	inline bool IsPointInRect(const Elite::Vector2& p, const Elite::Rect& r)
+	{
+		return (p.x >= r.bottomLeft.x &&
+			p.x <= r.bottomLeft.x + r.width &&
+			p.y >= r.bottomLeft.y &&
+			p.y <= r.bottomLeft.y + r.height);
+	}
 #pragma endregion //Rect
 
 }
