@@ -16,4 +16,11 @@ fight it out on a battle field with the only difference being their formation an
 
 
 > test
+## References
 
+### idk yet
+* [smt](https://www.wikiwand.com/simple/Phalanx_formation#:~:text=The%20phalanx%20formation%20is%20an,who%20often%20fought%20each%20other)
+
+### formations
+* [Flying Wedge](https://en.wikipedia.org/wiki/Flying_wedge)
+* [Wedge Phalanx](https://www.quora.com/Why-was-the-Macedonian-phalanx-so-effective-in-Alexanders-time-and-so-vulnerable-against-the-Romans)
