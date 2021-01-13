@@ -33,10 +33,16 @@ m_pBlueBlendedSteering = new BlendedSteering({ { m_pSeperationBehavior, 0.56f },
 ```
 
 ## Setting Up The Battle
+On the Right info panel you can select for both team which formation they each are going to use.
+![Formation Selectin img](https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/FormationSelection.PNG)
 
+When that is selected. The previous agents will be removed and new agents will be spawned in randomly from the somewhere withing the spawn zone.
+![Formation forming gif](https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/Formation.gif)
 
+You can click with left mouse button to change the middle point of the group formation to somwehere in their spawn zone. The same can be done for the red team but ten you have to press middle mouse button.
+When everything is setup you press the `FIGHT` button and the battle begins. At the end a small statistics window will be shown.
+![Formation Selectin img](https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/BattleEndCard.PNG)
 
-When everything is setup you press the `FIGHT` button and the battle begins. At the end a small statistics window I shown.
 
 fight it out on a battle field with the only difference being their formation and start position at the beginning of the battle.
 
