@@ -44,15 +44,26 @@ When that is selected. The previous agents will be removed and new agents will b
 You can click with left mouse button to change the middle point of the group formation to somwehere in their spawn zone. The same can be done for the red team but ten you have to press middle mouse button.
 When everything is setup you press the `FIGHT` button and the battle begins. At the end a small statistics window will be shown.
 
-![Formation Selectin img](https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/BattleEndCard.PNG )
+![Formation Selectin img](https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/BattleEndCard.PNG)
 width="40" height="40"
 
-fight it out on a battle field with the only difference being their formation and start position at the beginning of the battle.
+There is also a `RESET` button Which will reset both teams and respawn them so you can test a different formation with previous settings rememberd.
 
 
+## Formations
+In my current project I had only time to implement 3 different formations each of 36 man power big.
 
-> test
+* 6 x 6 Phalanx
 
+![Formation Selectin img](https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/6x6 Phalanx.PNG)
+
+* Flying Wedge
+
+![Formation Selectin img](https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/Flying Wedge.PNG)
+
+* Wedge Phalanx
+
+![Formation Selectin img](https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/Wedge Phalanx.PNG)
 
 ## Conlusion
 
