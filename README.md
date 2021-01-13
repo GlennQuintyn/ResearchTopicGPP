@@ -1,8 +1,9 @@
 # ResearchTopicGPP
 
 
-### Mini Formation Battle Simulator
- 
+## Mini Formation Battle Simulator
+
+## Intro
 
 ### The Idea
 The idea for this research project is to make a small and simple battle simulator. The goal is to let 2 groups of equal manpower and equal ability to take and deal damage fight it out.
@@ -13,25 +14,22 @@ For this research project I used the Elite Engine **G**ame **P**lay **P**rogramm
 
 ## Steering Behaviours
 ### Priority Steering Behaviour
-This steering behaviour exists out of 2 steering behaviours where one has priority over the other (hence the name). The first one (the one)
-to deal with enemies. The other part is a blended steering of 
+This steering behaviour exists out of 2 steering behaviours where one has priority over the other (hence the name). The first one (the one that has priority over the other behaviour) is an attack beviour. This behviour deals with the enemies when they are in vision range or in melee range to attack them. The other part is a blended steering behaviour. 
 ```cpp
 //priority steering
 m_pBluePrioritySteering = new PrioritySteering({ {m_pAttackBehavior},{m_pBlueBlendedSteering} });
 ```
 
 ### Blended Steering Behaviour
-
+This steering beviour is as its name implies a blend of different steering behviours. The blend exists out of 4 different steering behaviours with each a weight value that tells how much of this behaviour needs to be used:
+ * Seperation Behavior: take makes sure the agents don't clump together and take some distance from each other. 
+ * Cohesion Behavior: take makes sure the agents don't go too far away from each other. 
+ * Velocity Match Behavior: The agents try to match the veclocity of the other agents around them to move more as a unit instead of individual agents. 
+ * Seek Behavior: The agents need a target to go to and that is their position in their formation. 
 ```cpp
 //blended steering
-	m_pBlueBlendedSteering = new BlendedSteering({ { m_pSperationBehavior, 0.56f }, { m_pCohesionBehavior, 0.55f }//0.55f
-		, { m_pVelMathcBehavior, 0.35f } , { m_pBlueSeekBehavior, 0.9f } });//implicit vetor of weighted behavior
-
-	m_pRedBlendedSteering = new BlendedSteering({ { m_pSperationBehavior, 0.56f }, { m_pCohesionBehavior, 0.55f }//0.55f
-		, { m_pVelMathcBehavior, 0.35f } , { m_pRedSeekBehavior, .9f } });//implicit vetor of weighted behavior
-
-
-	m_pRedPrioritySteering = new PrioritySteering({ {m_pAttackBehavior},{m_pRedBlendedSteering} });
+m_pBlueBlendedSteering = new BlendedSteering({ { m_pSeperationBehavior, 0.56f }, { m_pCohesionBehavior, 0.55f }
+		, { m_pVelMatchBehavior, 0.35f } , { m_pBlueSeekBehavior, 0.9f } });//implicit vetor of weighted behavior
 ```
 
 
@@ -44,6 +42,8 @@ fight it out on a battle field with the only difference being their formation an
 
 > test
 
+
+## Conlusion
 
 
 
