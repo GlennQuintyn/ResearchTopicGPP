@@ -21,7 +21,7 @@ void SteeringAgent::Update(float dt)
 			//std::cout << "\nDEAD\n\n";
 			//make agent color black
 			SetBodyColor({ 0,0,0 });
-
+			
 			//if dead then set velocity to 0
 			output.LinearVelocity = {};
 		}

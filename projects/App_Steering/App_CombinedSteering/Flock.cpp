@@ -9,7 +9,7 @@
 
 using namespace Elite;
 
-const char* g_pFormations[]{ "Half Phalanx", "Flying Wedge", "Wedge Phalanx", "Test" };
+const char* g_pFormations[]{ "6 x 6 Phalanx", "Flying Wedge", "Wedge Phalanx", "Test" };
 
 //Constructor & Destructor
 Flock::Flock(const Elite::Rect& blueSpawnZone, const Elite::Rect& redSpawnZone, float worldSize, bool trimWorld)
@@ -23,17 +23,12 @@ Flock::Flock(const Elite::Rect& blueSpawnZone, const Elite::Rect& redSpawnZone, 
 	, m_RedNeighbors{}//make neighbors memory pool but only gets re-ajusted in the actual spawning of the agents
 	, m_NrOfBlueNeighbors{ 0 }
 	, m_NrOfRedNeighbors{ 0 }
-	, m_AttackRange{ 10.f }
+	, m_AttackRange{ 30.f }
+	, m_MaxSpeed{ 30.f }
 {
 	//because both spawn zones have the same dimension they are just general
-	//m_SpawnWidth = { worldSize / 5.f };
-	//m_SpawnHeight = { worldSize / 3.f };
-
 	m_SpawnWidth = blueSpawnZone.width;//{ worldSize / 5.f };
 	m_SpawnHeight = blueSpawnZone.height;//{ worldSize / 3.f };
-
-	//m_BlueSpawnZone = { {worldSize / 8.f, (worldSize / 2.f) - (m_SpawnHeight / 2.f)},m_SpawnWidth, m_SpawnHeight };
-	//m_RedSpawnZone = { {(worldSize * 7.f / 8.f) - m_SpawnWidth, (worldSize / 2.f) - (m_SpawnHeight / 2.f)}, m_SpawnWidth, m_SpawnHeight };
 
 	m_BlueSpawnZone = blueSpawnZone;
 	m_RedSpawnZone = redSpawnZone;
@@ -47,21 +42,14 @@ Flock::Flock(const Elite::Rect& blueSpawnZone, const Elite::Rect& redSpawnZone, 
 	//priority behaviour
 	m_pAttackBehavior = new Attack(this);
 
-	m_pAttackBehavior->SetAttackRadius(30.f);
+	m_pAttackBehavior->SetAttackRadius(m_AttackRange);
 
 	//blended steering
-	//m_pBlendedSteering = new BlendedSteering({ { m_pSperationBehavior, 0.25f }, { m_pCohesionBehavior,0.25f }
-	//	, { m_pVelMathcBehavior,0.25f } , { m_pSeekBehavior,0.25f } , {m_pWanderBehavior ,0.25f } });//implicit vetor of weighted behavior
-
-	m_pBlueBlendedSteering = new BlendedSteering({ { m_pSperationBehavior, 0.55f }, { m_pCohesionBehavior, 0.55f }
+	m_pBlueBlendedSteering = new BlendedSteering({ { m_pSperationBehavior, 0.56f }, { m_pCohesionBehavior, 0.55f }//0.55f
 		, { m_pVelMathcBehavior, 0.35f } , { m_pBlueSeekBehavior, 0.9f } });//implicit vetor of weighted behavior
 
-	m_pRedBlendedSteering = new BlendedSteering({ { m_pSperationBehavior, 0.55f }, { m_pCohesionBehavior, 0.55f }
+	m_pRedBlendedSteering = new BlendedSteering({ { m_pSperationBehavior, 0.56f }, { m_pCohesionBehavior, 0.55f }//0.55f
 		, { m_pVelMathcBehavior, 0.35f } , { m_pRedSeekBehavior, .9f } });//implicit vetor of weighted behavior
-
-	//behaviors for priority steering
-	m_pEvadeBehavior = new Evade();
-	m_pEvadeBehavior->SetEvadeRadius(25.f);
 
 	//priority steering
 	m_pBluePrioritySteering = new PrioritySteering({ {m_pAttackBehavior},{m_pBlueBlendedSteering} });
@@ -98,15 +86,13 @@ Flock::~Flock()
 	SAFE_DELETE(m_pRedSeekBehavior);
 	SAFE_DELETE(m_pAttackBehavior);
 
-	SAFE_DELETE(m_pEvadeBehavior);
-
 	SAFE_DELETE(m_pSpacePartitioning);
 }
 
 void Flock::Update(float deltaT, float worldSize, const TargetData& targetDataLclick, const TargetData& targetDataRclick)
 {
-	bool firstTime{ true };
-	TargetData agentToEvadeDate{};
+	//bool firstTime{ true };
+	//TargetData agentToEvadeDate{};
 
 	//Elite::Vector2 m_BlueCenterPos{ m_BlueSpawnZone.bottomLeft.x + m_BlueSpawnZone.width / 2.f,m_BlueSpawnZone.bottomLeft.y + m_BlueSpawnZone.height / 2.f };
 	//Elite::Vector2 m_RedCenterPos{ m_RedSpawnZone.bottomLeft.x + m_RedSpawnZone.width / 2.f,m_RedSpawnZone.bottomLeft.y + m_RedSpawnZone.height / 2.f };
@@ -122,280 +108,25 @@ void Flock::Update(float deltaT, float worldSize, const TargetData& targetDataLc
 		m_RedCenterPos = { m_WorldSize / 2.f ,m_WorldSize / 2.f };
 	}
 
+	float agentSize{ SteeringAgent{}.GetRadius() * 4 };//get base agent size
 
-	TargetData blueTargetData{};
-	TargetData redTargetData{};
-	blueTargetData.Position = { m_BlueCenterPos };
-	redTargetData.Position = { m_RedCenterPos };
+	static bool flipbool{};
 
-	DEBUGRENDERER2D->DrawPoint(blueTargetData.Position, 4.5f, m_Blue, .01f);
-	DEBUGRENDERER2D->DrawPoint(redTargetData.Position, 4.5f, m_Red, .01f);
-
-	Formations blueFormation{ Formations(m_BlueFormationIdx) };
-	Formations redFormation{ Formations(m_RedFormationIdx) };
-
-	float agentSize{ SteeringAgent{}.GetRadius()/*  m_BlueAgents[0]->GetRadius() */ * 4 };//get base agent
-	int index{};
-	for (SteeringAgent* steeringAgent : m_BlueAgents)
+	if (flipbool)
 	{
-		m_NrOfBlueNeighbors = 0;
-
-		//if agent is dead go to the next agent
-		if (!steeringAgent->IsAlive())
-		{
-			steeringAgent->Update(deltaT);
-			steeringAgent->TrimToWorld({ 0,0 }, { worldSize ,worldSize });
-			continue;
-		}
-
-		switch (blueFormation)
-		{
-		case Formations::Test:
-			blueTargetData.Position = { m_BlueCenterPos.x - (agentSize * 2.5f) + (agentSize * (index % 6)) ,m_BlueCenterPos.y + (agentSize * 2.5f) - (agentSize * (index / 6)) };
-			break;
-		case Formations::HalfPhalanx:
-			blueTargetData.Position = { m_BlueCenterPos.x - (agentSize * 2.5f) + (agentSize * (index % 6)) ,m_BlueCenterPos.y + (agentSize * 2.5f) - (agentSize * (index / 6)) };
-			break;
-		case Formations::FlyingWedge:
-		{
-			float xDistance{};
-			float yDistance{};
-
-			CalcFlyingWedgeXY(index, xDistance, yDistance, false);
-
-#pragma region MyRegion
-			/*
-			if (index == 0)
-			{
-				xDistance = 3;
-			}
-			else if (index < 4)
-			{
-				xDistance = 2;
-				yDistance = -index + 2;
-			}
-			else if (index < 9)
-			{
-				xDistance = 1;
-				yDistance = -(index - 2) + 4;
-			}
-			else if (index < 16)
-			{
-				yDistance = -(index - 6) + 6;
-			}
-			else if (index < 25)
-			{
-				xDistance = -1;
-				yDistance = -(index - 12) + 8;
-			}
-			else if (index < 36)
-			{
-				xDistance = -2;
-				yDistance = -(index - 20) + 10;
-			}
-			*/
-#pragma endregion
-
-			blueTargetData.Position = { m_BlueCenterPos.x + (agentSize * xDistance) , m_BlueCenterPos.y - (agentSize * yDistance) };
-		}
-		break;
-		case Formations::WedgePhalanx:
-		{
-			float xDistance{};
-			float yDistance{};
-
-			CalcWedgePhalanxXY(index, xDistance, yDistance, false);
-
-#pragma region MyRegion
-			/*
-			if (index < 2)
-			{
-				xDistance = 3;
-
-				(index & 1) ? yDistance = -.5f : yDistance = .5f;
-			}
-			else if (index < 6)
-			{
-				xDistance = 2;
-				yDistance = -index + 3.5f;
-			}
-			else if (index < 12)
-			{
-				xDistance = 1;
-				yDistance = -index + 8.5f;
-			}
-			else if (index < 18)
-			{
-				(index < 15) ? yDistance = -index + 15.5f : yDistance = -index + 13.5f;
-			}
-			else if (index < 24)
-			{
-				xDistance = -1;
-				(index < 21) ? yDistance = -index + 22.5f : yDistance = -index + 18.5f;//gap of 4
-			}
-			else if (index < 30)
-			{
-				xDistance = -2;
-				(index < 27) ? yDistance = -index + 29.5f : yDistance = -index + 23.5f;//gap of 6
-			}
-			else if (index < 36)
-			{
-				xDistance = -3;
-				(index < 33) ? yDistance = -index + 36.5f : yDistance = -index + 28.5f;//gap of 8
-			}
-			*/
-#pragma endregion
-
-			blueTargetData.Position = { m_BlueCenterPos.x + (agentSize * xDistance) , m_BlueCenterPos.y - (agentSize * yDistance) };
-		}
-		break;
-		}
-
-		SetAgentTarget(steeringAgent, blueTargetData);
-
-		DEBUGRENDERER2D->DrawPoint(blueTargetData.Position, 2, { 1,1,1 }, .8f);
-
-		RegisterBlueNeighbours(steeringAgent);
-
-
-		steeringAgent->Update(deltaT);
-		steeringAgent->TrimToWorld({ 0,0 }, { worldSize ,worldSize });
-
-		steeringAgent->SetRenderBehavior(m_DebugRenderSteering);
-
-		index++;
+		UpdateRed(agentSize, deltaT);
+		UpdateBlue(agentSize, deltaT);
+	}
+	else
+	{
+		UpdateBlue(agentSize, deltaT);
+		UpdateRed(agentSize, deltaT);
 	}
 
-	index = 0;
-	for (SteeringAgent* steeringAgent : m_RedAgents)
-	{
-		m_NrOfRedNeighbors = 0;
-
-		//if agent is dead do small update and go to the next agent
-		if (!steeringAgent->IsAlive())
-		{
-			steeringAgent->Update(deltaT);
-			steeringAgent->TrimToWorld({ 0,0 }, { worldSize ,worldSize });
-			continue;
-		}
-
-		switch (redFormation)
-		{
-		case Formations::Test:
-			redTargetData.Position = { m_RedCenterPos.x - (agentSize * 2.5f) + (agentSize * (index % 6)) ,m_RedCenterPos.y + (agentSize * 2.5f) - (agentSize * (index / 6)) };
-			break;
-		case Formations::HalfPhalanx:
-			redTargetData.Position = { m_RedCenterPos.x - (agentSize * 2.5f) + (agentSize * (index % 6)) ,m_RedCenterPos.y + (agentSize * 2.5f) - (agentSize * (index / 6)) };
-			break;
-		case Formations::FlyingWedge:
-		{
-			float xDistance{};
-			float yDistance{};
-			CalcFlyingWedgeXY(index, xDistance, yDistance, true);
-
-			/*
-			#pragma region MyRegion
-						if (index == 0)
-						{
-							xDistance = -3;
-						}
-						else if (index < 4)
-						{
-							xDistance = -2;
-							yDistance = -index + 2;
-						}
-						else if (index < 9)
-						{
-							xDistance = -1;
-							yDistance = -(index - 2) + 4;
-						}
-						else if (index < 16)
-						{
-							yDistance = -(index - 6) + 6;
-						}
-						else if (index < 25)
-						{
-							xDistance = 1;
-							yDistance = -(index - 12) + 8;
-						}
-						else if (index < 36)
-						{
-							xDistance = 2;
-							yDistance = -(index - 20) + 10;
-						}
-			#pragma endregion
-			*/
-
-			redTargetData.Position = { m_RedCenterPos.x + (agentSize * xDistance) , m_RedCenterPos.y - (agentSize * yDistance) };
-		}
-		break;
-		case Formations::WedgePhalanx:
-		{
-			float xDistance{};
-			float yDistance{};
-
-			CalcWedgePhalanxXY(index, xDistance, yDistance, true);
-			/*
-#pragma region MyRegion
-			if (index < 2)
-			{
-				xDistance = -3;
-
-				(index & 1) ? yDistance = -.5f : yDistance = .5f;
-			}
-			else if (index < 6)
-			{
-				xDistance = -2;
-				yDistance = -index + 3.5f;
-			}
-			else if (index < 12)
-			{
-				xDistance = -1;
-				yDistance = -index + 8.5f;
-			}
-			else if (index < 18)
-			{
-				(index < 15) ? yDistance = -index + 15.5f : yDistance = -index + 13.5f;
-			}
-			else if (index < 24)
-			{
-				xDistance = 1;
-				(index < 21) ? yDistance = -index + 22.5f : yDistance = -index + 18.5f;//gap of 4
-			}
-			else if (index < 30)
-			{
-				xDistance = 2;
-				(index < 27) ? yDistance = -index + 29.5f : yDistance = -index + 23.5f;//gap of 6
-			}
-			else if (index < 36)
-			{
-				xDistance = 3;
-				(index < 33) ? yDistance = -index + 36.5f : yDistance = -index + 28.5f;//gap of 8
-			}
-#pragma endregion
-			*/
-
-			redTargetData.Position = { m_RedCenterPos.x + (agentSize * xDistance) , m_RedCenterPos.y - (agentSize * yDistance) };
-		}
-		break;
-		}
-
-
-		SetAgentTarget(steeringAgent, redTargetData);
-
-		DEBUGRENDERER2D->DrawPoint(redTargetData.Position, 2, { 1,1,1 }, .8f);
-
-		RegisterRedNeighbours(steeringAgent);
-
-		steeringAgent->Update(deltaT);
-		steeringAgent->TrimToWorld({ 0,0 }, { worldSize ,worldSize });
-
-		steeringAgent->SetRenderBehavior(m_DebugRenderSteering);
-		index++;
-	}
+	flipbool = !flipbool;
 
 	//if battle not over keep counting battle time
-	if (m_BlueAgents.size() != 0 && m_RedAgents.size() != 0)
+	if (m_LivingBlueAgentCount != 0 && m_LivingRedAgentCount != 0)
 		m_TotalBattleTime += deltaT;
 
 }
@@ -527,7 +258,7 @@ void Flock::UpdateAndRenderUI()
 #pragma endregion
 
 
-	if (m_BlueAgents.size() == 0 && m_RedAgents.size() != 0)
+	if (m_LivingBlueAgentCount == 0 && m_LivingRedAgentCount != 0)
 	{
 		//Setup
 		int endScreenMenuWidth = 250;
@@ -568,7 +299,7 @@ void Flock::UpdateAndRenderUI()
 		ImGui::End();
 	}
 
-	if (m_BlueAgents.size() != 0 && m_RedAgents.size() == 0)
+	if (m_LivingBlueAgentCount != 0 && m_LivingRedAgentCount == 0)
 	{
 		//Setup
 		int endScreenMenuWidth = 250;
@@ -609,11 +340,52 @@ void Flock::UpdateAndRenderUI()
 		ImGui::End();
 	}
 
+	if (m_LivingBlueAgentCount == 0 && m_LivingRedAgentCount == 0)
+	{
+		//Setup
+		int endScreenMenuWidth = 250;
+		int endScreenMenuHeight = 125;
+		int const width = DEBUGRENDERER2D->GetActiveCamera()->GetWidth() - leftMenuWidth;
+		int const height = DEBUGRENDERER2D->GetActiveCamera()->GetHeight();
+		bool windowActive = true;
+		ImGui::SetNextWindowPos(ImVec2(((float)width / 2.f) - (endScreenMenuWidth / 2.f), ((float)height / 2.f) - endScreenMenuHeight));
+		ImGui::SetNextWindowSize(ImVec2((float)endScreenMenuWidth, (float)endScreenMenuHeight));
+		ImGui::Begin("Game Over", &windowActive, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+		ImGui::PushAllowKeyboardFocus(false);
+
+
+		//ImGui::Text("Blue Team formation");
+		ImGui::Indent();
+		ImGui::Indent();
+		ImGui::Spacing();
+		ImGui::Text("NO TEAM HAS WON!");
+		ImGui::Spacing();
+		ImGui::Unindent();
+		ImGui::Unindent();
+		ImGui::Separator();
+
+		ImGui::Spacing();
+		ImGui::Text("STATS:");
+		ImGui::Spacing();
+		ImGui::Indent();
+		std::stringstream endStatsStream{};
+		endStatsStream << "No one Survived";
+		ImGui::Text(endStatsStream.str().c_str());
+		endStatsStream.str(std::string());
+		endStatsStream << "Battle Duration: " << std::fixed << std::setprecision(2) << m_TotalBattleTime << " seconds";
+		ImGui::Text(endStatsStream.str().c_str());
+		ImGui::Unindent();
+
+		//End
+		ImGui::PopAllowKeyboardFocus();
+		ImGui::End();
+	}
 
 	//flip attack button to true if button was pressed once
 	if (fightButtonReturn)
 	{
 		m_Attack = true;
+		m_BattleEnd = false;
 		std::cout << "ATTACK!\n";
 		m_TotalBattleTime = 0;
 	}
@@ -621,6 +393,7 @@ void Flock::UpdateAndRenderUI()
 	if (resetButtonReturn)
 	{
 		m_Attack = false;
+		m_BattleEnd = false;
 		std::cout << "Nope Reset\n";
 		SpawnBlueFormation();
 		SpawnRedFormation();
@@ -795,7 +568,6 @@ Elite::Vector2 Flock::GetAverageRedNeighborVelocity(const Elite::Color& color) c
 	return averageVelocity;
 }
 
-
 float* Flock::GetBlueWeight(ISteeringBehavior* pBehavior)
 {
 	if (m_pBlueBlendedSteering)
@@ -844,7 +616,7 @@ void Flock::SpawnBlueFormation()
 
 	switch (blueFormation)
 	{
-	case Formations::Test://4 units
+	case Formations::Test://x units
 	{
 		for (SteeringAgent* steeringAgent : m_BlueAgents)
 		{
@@ -852,14 +624,14 @@ void Flock::SpawnBlueFormation()
 		}
 		m_BlueAgents.clear();
 
-		m_BlueGroupSize = 4;
-		m_BlueNeighbors.resize(4);
+		m_BlueGroupSize = 2;
+		m_BlueNeighbors.resize(2);
 		//init each agent
 		for (int i = 0; i < m_BlueGroupSize; i++)
 		{
 			m_BlueAgents.push_back(new SteeringAgent{});
 			m_BlueAgents[i]->SetPosition({ Elite::randomFloat(m_BlueSpawnZone.bottomLeft.x,m_BlueSpawnZone.bottomLeft.x + m_SpawnWidth), Elite::randomFloat(m_BlueSpawnZone.bottomLeft.y,m_BlueSpawnZone.bottomLeft.y + m_SpawnHeight) });
-			m_BlueAgents[i]->SetMaxLinearSpeed(35.f);
+			m_BlueAgents[i]->SetMaxLinearSpeed(m_MaxSpeed);
 			m_BlueAgents[i]->SetAutoOrient(true);
 			m_BlueAgents[i]->SetMass(1.f);
 			m_BlueAgents[i]->SetSteeringBehavior(m_pBluePrioritySteering);
@@ -884,7 +656,7 @@ void Flock::SpawnBlueFormation()
 		{
 			m_BlueAgents.push_back(new SteeringAgent{});
 			m_BlueAgents[i]->SetPosition({ Elite::randomFloat(m_BlueSpawnZone.bottomLeft.x,m_BlueSpawnZone.bottomLeft.x + m_SpawnWidth), Elite::randomFloat(m_BlueSpawnZone.bottomLeft.y,m_BlueSpawnZone.bottomLeft.y + m_SpawnHeight) });
-			m_BlueAgents[i]->SetMaxLinearSpeed(35.f);
+			m_BlueAgents[i]->SetMaxLinearSpeed(m_MaxSpeed);
 			m_BlueAgents[i]->SetAutoOrient(true);
 			m_BlueAgents[i]->SetMass(1.f);
 			m_BlueAgents[i]->SetSteeringBehavior(m_pBluePrioritySteering);
@@ -910,7 +682,7 @@ void Flock::SpawnBlueFormation()
 		{
 			m_BlueAgents.push_back(new SteeringAgent{});
 			m_BlueAgents[i]->SetPosition({ Elite::randomFloat(m_BlueSpawnZone.bottomLeft.x,m_BlueSpawnZone.bottomLeft.x + m_SpawnWidth), Elite::randomFloat(m_BlueSpawnZone.bottomLeft.y,m_BlueSpawnZone.bottomLeft.y + m_SpawnHeight) });
-			m_BlueAgents[i]->SetMaxLinearSpeed(35.f);
+			m_BlueAgents[i]->SetMaxLinearSpeed(m_MaxSpeed);
 			m_BlueAgents[i]->SetAutoOrient(true);
 			m_BlueAgents[i]->SetMass(1.f);
 			m_BlueAgents[i]->SetSteeringBehavior(m_pBluePrioritySteering);
@@ -935,7 +707,7 @@ void Flock::SpawnBlueFormation()
 		{
 			m_BlueAgents.push_back(new SteeringAgent{});
 			m_BlueAgents[i]->SetPosition({ Elite::randomFloat(m_BlueSpawnZone.bottomLeft.x,m_BlueSpawnZone.bottomLeft.x + m_SpawnWidth), Elite::randomFloat(m_BlueSpawnZone.bottomLeft.y,m_BlueSpawnZone.bottomLeft.y + m_SpawnHeight) });
-			m_BlueAgents[i]->SetMaxLinearSpeed(35.f);
+			m_BlueAgents[i]->SetMaxLinearSpeed(m_MaxSpeed);
 			m_BlueAgents[i]->SetAutoOrient(true);
 			m_BlueAgents[i]->SetMass(1.f);
 			m_BlueAgents[i]->SetSteeringBehavior(m_pBluePrioritySteering);
@@ -946,6 +718,8 @@ void Flock::SpawnBlueFormation()
 	}
 	break;
 	}
+
+	m_LivingBlueAgentCount = m_BlueAgents.size();
 }
 
 void Flock::SpawnRedFormation()
@@ -956,7 +730,7 @@ void Flock::SpawnRedFormation()
 
 	switch (redFormation)
 	{
-	case Formations::Test://30 units
+	case Formations::Test://x units
 	{
 		for (SteeringAgent* steeringAgent : m_RedAgents)
 		{
@@ -964,14 +738,14 @@ void Flock::SpawnRedFormation()
 		}
 		m_RedAgents.clear();
 
-		m_RedGroupSize = 4;
-		m_RedNeighbors.resize(4);
+		m_RedGroupSize = 2;
+		m_RedNeighbors.resize(2);
 		//init each agent
 		for (int i = 0; i < m_RedGroupSize; i++)
 		{
 			m_RedAgents.push_back(new SteeringAgent{});
 			m_RedAgents[i]->SetPosition({ Elite::randomFloat(m_RedSpawnZone.bottomLeft.x,m_RedSpawnZone.bottomLeft.x + m_SpawnWidth), Elite::randomFloat(m_RedSpawnZone.bottomLeft.y,m_RedSpawnZone.bottomLeft.y + m_SpawnHeight) });
-			m_RedAgents[i]->SetMaxLinearSpeed(35.f);
+			m_RedAgents[i]->SetMaxLinearSpeed(m_MaxSpeed);
 			m_RedAgents[i]->SetAutoOrient(true);
 			m_RedAgents[i]->SetMass(1.f);
 			m_RedAgents[i]->SetSteeringBehavior(m_pRedPrioritySteering);
@@ -996,7 +770,7 @@ void Flock::SpawnRedFormation()
 		{
 			m_RedAgents.push_back(new SteeringAgent{});
 			m_RedAgents[i]->SetPosition({ Elite::randomFloat(m_RedSpawnZone.bottomLeft.x,m_RedSpawnZone.bottomLeft.x + m_SpawnWidth), Elite::randomFloat(m_RedSpawnZone.bottomLeft.y,m_RedSpawnZone.bottomLeft.y + m_SpawnHeight) });
-			m_RedAgents[i]->SetMaxLinearSpeed(35.f);
+			m_RedAgents[i]->SetMaxLinearSpeed(m_MaxSpeed);
 			m_RedAgents[i]->SetAutoOrient(true);
 			m_RedAgents[i]->SetMass(1.f);
 			m_RedAgents[i]->SetSteeringBehavior(m_pRedPrioritySteering);
@@ -1021,7 +795,7 @@ void Flock::SpawnRedFormation()
 		{
 			m_RedAgents.push_back(new SteeringAgent{});
 			m_RedAgents[i]->SetPosition({ Elite::randomFloat(m_RedSpawnZone.bottomLeft.x,m_RedSpawnZone.bottomLeft.x + m_SpawnWidth), Elite::randomFloat(m_RedSpawnZone.bottomLeft.y,m_RedSpawnZone.bottomLeft.y + m_SpawnHeight) });
-			m_RedAgents[i]->SetMaxLinearSpeed(35.f);
+			m_RedAgents[i]->SetMaxLinearSpeed(m_MaxSpeed);
 			m_RedAgents[i]->SetAutoOrient(true);
 			m_RedAgents[i]->SetMass(1.f);
 			m_RedAgents[i]->SetSteeringBehavior(m_pRedPrioritySteering);
@@ -1046,7 +820,7 @@ void Flock::SpawnRedFormation()
 		{
 			m_RedAgents.push_back(new SteeringAgent{});
 			m_RedAgents[i]->SetPosition({ Elite::randomFloat(m_RedSpawnZone.bottomLeft.x,m_RedSpawnZone.bottomLeft.x + m_SpawnWidth), Elite::randomFloat(m_RedSpawnZone.bottomLeft.y,m_RedSpawnZone.bottomLeft.y + m_SpawnHeight) });
-			m_RedAgents[i]->SetMaxLinearSpeed(35.f);
+			m_RedAgents[i]->SetMaxLinearSpeed(m_MaxSpeed);
 			m_RedAgents[i]->SetAutoOrient(true);
 			m_RedAgents[i]->SetMass(1.f);
 			m_RedAgents[i]->SetSteeringBehavior(m_pRedPrioritySteering);
@@ -1057,6 +831,148 @@ void Flock::SpawnRedFormation()
 	}
 	break;
 	}
+
+	m_LivingRedAgentCount = m_RedAgents.size();;
+}
+
+void Flock::UpdateBlue(float agentSize, float deltaT)
+{
+	TargetData blueTargetData{};
+	blueTargetData.Position = { m_BlueCenterPos };
+	DEBUGRENDERER2D->DrawPoint(blueTargetData.Position, 4.5f, m_Blue, .01f);
+
+	Formations blueFormation{ Formations(m_BlueFormationIdx) };
+
+	int index{};
+	int alliveCount{};
+	for (SteeringAgent* steeringAgent : m_BlueAgents)
+	{
+		m_NrOfBlueNeighbors = 0;
+
+		//if agent is dead go to the next agent
+		if (!steeringAgent->IsAlive())
+		{
+			steeringAgent->Update(deltaT);
+			steeringAgent->TrimToWorld({ 0,0 }, { m_WorldSize, m_WorldSize });
+			continue;
+		}
+		else
+		{
+			alliveCount++;
+		}
+
+		switch (blueFormation)
+		{
+		case Formations::Test:
+			blueTargetData.Position = { m_BlueCenterPos.x - (agentSize * 2.5f) + (agentSize * (index % 6)) ,m_BlueCenterPos.y + (agentSize * 2.5f) - (agentSize * (index / 6)) };
+			break;
+		case Formations::HalfPhalanx:
+			blueTargetData.Position = { m_BlueCenterPos.x - (agentSize * 2.5f) + (agentSize * (index % 6)) ,m_BlueCenterPos.y + (agentSize * 2.5f) - (agentSize * (index / 6)) };
+			break;
+		case Formations::FlyingWedge:
+		{
+			float xDistance{};
+			float yDistance{};
+
+			CalcFlyingWedgeXY(index, xDistance, yDistance, false);
+
+
+			blueTargetData.Position = { m_BlueCenterPos.x + (agentSize * xDistance) , m_BlueCenterPos.y - (agentSize * yDistance) };
+		}
+		break;
+		case Formations::WedgePhalanx:
+		{
+			float xDistance{};
+			float yDistance{};
+
+			CalcWedgePhalanxXY(index, xDistance, yDistance, false);
+
+			blueTargetData.Position = { m_BlueCenterPos.x + (agentSize * xDistance) , m_BlueCenterPos.y - (agentSize * yDistance) };
+		}
+		break;
+		}
+
+		SetAgentTarget(steeringAgent, blueTargetData);
+		DEBUGRENDERER2D->DrawPoint(blueTargetData.Position, 2, { 1,1,1 }, .8f);
+		RegisterBlueNeighbours(steeringAgent);
+
+		steeringAgent->Update(deltaT);
+		steeringAgent->TrimToWorld({ 0,0 }, { m_WorldSize, m_WorldSize });
+
+		steeringAgent->SetRenderBehavior(m_DebugRenderSteering);
+		index++;
+	}
+
+	m_LivingBlueAgentCount = alliveCount;
+}
+
+void Flock::UpdateRed(float agentSize, float deltaT)
+{
+	TargetData redTargetData{};
+	redTargetData.Position = { m_RedCenterPos };
+	DEBUGRENDERER2D->DrawPoint(redTargetData.Position, 4.5f, m_Red, .01f);
+
+	Formations redFormation{ Formations(m_RedFormationIdx) };
+
+	int index{};
+	int alliveCount{};
+	for (SteeringAgent* steeringAgent : m_RedAgents)
+	{
+		m_NrOfRedNeighbors = 0;
+
+		//if agent is dead do small update and go to the next agent
+		if (!steeringAgent->IsAlive())
+		{
+			steeringAgent->Update(deltaT);
+			steeringAgent->TrimToWorld({ 0,0 }, { m_WorldSize, m_WorldSize });
+			continue;
+		}
+		else
+		{
+			alliveCount++;
+		}
+
+		switch (redFormation)
+		{
+		case Formations::Test:
+			redTargetData.Position = { m_RedCenterPos.x - (agentSize * 2.5f) + (agentSize * (index % 6)) ,m_RedCenterPos.y + (agentSize * 2.5f) - (agentSize * (index / 6)) };
+			break;
+		case Formations::HalfPhalanx:
+			redTargetData.Position = { m_RedCenterPos.x - (agentSize * 2.5f) + (agentSize * (index % 6)) ,m_RedCenterPos.y + (agentSize * 2.5f) - (agentSize * (index / 6)) };
+			break;
+		case Formations::FlyingWedge:
+		{
+			float xDistance{};
+			float yDistance{};
+			CalcFlyingWedgeXY(index, xDistance, yDistance, true);
+
+			redTargetData.Position = { m_RedCenterPos.x + (agentSize * xDistance) , m_RedCenterPos.y - (agentSize * yDistance) };
+		}
+		break;
+		case Formations::WedgePhalanx:
+		{
+			float xDistance{};
+			float yDistance{};
+
+			CalcWedgePhalanxXY(index, xDistance, yDistance, true);
+
+			redTargetData.Position = { m_RedCenterPos.x + (agentSize * xDistance) , m_RedCenterPos.y - (agentSize * yDistance) };
+		}
+		break;
+		}
+
+		SetAgentTarget(steeringAgent, redTargetData);
+		DEBUGRENDERER2D->DrawPoint(redTargetData.Position, 2, { 1,1,1 }, .8f);
+		RegisterRedNeighbours(steeringAgent);
+
+		steeringAgent->Update(deltaT);
+		steeringAgent->TrimToWorld({ 0,0 }, { m_WorldSize, m_WorldSize });
+
+		steeringAgent->SetRenderBehavior(m_DebugRenderSteering);
+		index++;
+	}
+
+	m_LivingRedAgentCount = alliveCount;
 }
 
 void Flock::CalcFlyingWedgeXY(int index, float& xDistance, float& yDistance, bool Inverted)
@@ -1068,26 +984,26 @@ void Flock::CalcFlyingWedgeXY(int index, float& xDistance, float& yDistance, boo
 	else if (index < 4)
 	{
 		xDistance = 2;
-		yDistance = -index + 2;
+		yDistance = -index + 2.f;
 	}
 	else if (index < 9)
 	{
 		xDistance = 1;
-		yDistance = -(index - 2) + 4;
+		yDistance = -(index - 2) + 4.f;
 	}
 	else if (index < 16)
 	{
-		yDistance = -(index - 6) + 6;
+		yDistance = -(index - 6) + 6.f;
 	}
 	else if (index < 25)
 	{
 		xDistance = -1;
-		yDistance = -(index - 12) + 8;
+		yDistance = -(index - 12) + 8.f;
 	}
 	else if (index < 36)
 	{
 		xDistance = -2;
-		yDistance = -(index - 20) + 10;
+		yDistance = -(index - 20) + 10.f;
 	}
 
 	if (Inverted)

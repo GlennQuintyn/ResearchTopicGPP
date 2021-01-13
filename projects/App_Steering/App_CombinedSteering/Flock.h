@@ -87,9 +87,6 @@ private:
 	VelocityMatch* m_pVelMathcBehavior;
 	Seek* m_pBlueSeekBehavior;
 	Seek* m_pRedSeekBehavior;
-	//Wander* m_pWanderBehavior;
-	//Wander* m_pWanderEvader;
-	Evade* m_pEvadeBehavior;
 	Attack* m_pAttackBehavior;
 
 	//spawn zones
@@ -104,11 +101,16 @@ private:
 
 	float m_AttackRange{};
 	float m_TotalBattleTime{};
+	float m_MaxSpeed{};
 
 	int m_BlueFormationIdx{};
 	int m_RedFormationIdx{};
 
+	int m_LivingBlueAgentCount{};
+	int m_LivingRedAgentCount{};
+
 	bool m_Attack{};
+	bool m_BattleEnd{};
 
 	//UI bools
 	bool m_DebugRenderSteering{};
@@ -123,8 +125,8 @@ private:
 	void SpawnBlueFormation();
 	void SpawnRedFormation();
 
-	void UpdateBlue();
-	void UpdateRed();
+	void UpdateBlue(float agentSize,float deltaT);
+	void UpdateRed(float agentSize,float deltaT);
 
 	void CalcFlyingWedgeXY(int index, float& xDistance, float& yDistance, bool Inverted = false);
 	void CalcWedgePhalanxXY(int index, float& xDistance, float& yDistance, bool Inverted = false);

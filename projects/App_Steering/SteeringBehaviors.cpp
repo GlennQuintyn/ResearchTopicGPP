@@ -224,6 +224,13 @@ SteeringOutput Evade::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 SteeringOutput Attack::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 {
 	SteeringOutput steering = {};
+
+	if (!pAgent->IsAlive())
+	{
+		steering.IsValid = false;
+		return steering;
+	}
+
 	SteeringAgent* pClosestEnemy = m_pFlock->GetClosestEnemy(pAgent->GetPosition(), pAgent->GetBodyColor());
 
 	if (pClosestEnemy == nullptr)
@@ -231,29 +238,43 @@ SteeringOutput Attack::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 		steering.IsValid = false;
 		return steering;
 	}
+	else
+	{
+		
+		//DEBUGRENDERER2D->DrawCircle(pClosestEnemy->GetPosition(), m_AttackRadius, {1,1,1})
+	}
 
 	//if in hit range AND alive do attack logic
 	if (pClosestEnemy->IsAlive() && Elite::DistanceSquared(pAgent->GetPosition(), pClosestEnemy->GetPosition()) <= m_HitRange * m_HitRange)
 	{
+		DEBUGRENDERER2D->DrawSegment(pAgent->GetPosition(), pClosestEnemy->GetPosition(), pAgent->GetBodyColor());
 		//do attack logic
 		if (pAgent->Attack())
 		{
-			std::cout << "\nATTACK\n\n";
+			if (pAgent->GetBodyColor() == m_Red)
+			{
+				std::cout << "Agent color: RED \tATTACKS\n\n";
+			}
+			else
+			{
+				std::cout << "Agent color: BLUE \tATTACKS\n\n";
+			}
+
 			//if agent can attack damage closest enemy
 			pClosestEnemy->TakeDamage(pAgent->DamgeValue());
-
-			//steering.LinearVelocity = {};	
 		}
 		//if in attacking range stop moving
 		return steering;
 	}
 	//if not check if still within chasing range or not alive
-	else if ((!pClosestEnemy->IsAlive())||Elite::DistanceSquared(pAgent->GetPosition(), pClosestEnemy->GetPosition()) >= m_AttackRadius * m_AttackRadius)
+	else if ((!pClosestEnemy->IsAlive()) || Elite::DistanceSquared(pAgent->GetPosition(), pClosestEnemy->GetPosition()) >= m_AttackRadius * m_AttackRadius)
 	{
 		//if in range or
 		steering.IsValid = false;
 		return steering;
 	}
+
+	DEBUGRENDERER2D->DrawSegment(pAgent->GetPosition(), pClosestEnemy->GetPosition(), pAgent->GetBodyColor());
 
 	//if atleast in chase range do target calculations
 	steering.LinearVelocity = pClosestEnemy->GetPosition() - pAgent->GetPosition(); //Desired Velocity
