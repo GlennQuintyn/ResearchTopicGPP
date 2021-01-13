@@ -35,7 +35,7 @@ m_pBlueBlendedSteering = new BlendedSteering({ { m_pSeperationBehavior, 0.56f },
 ## Setting Up The Battle
 On the Right info panel you can select for both team which formation they each are going to use.
 
-![Formation Selectin img](https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/FormationSelection.PNG)
+<img src="https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/FormationSelection.PNG" alt="Formation Selectin img" width="300" height="200"/>
 
 When that is selected. The previous agents will be removed and new agents will be spawned in randomly from the somewhere withing the spawn zone.
 
@@ -63,6 +63,7 @@ In my current project I had only time to implement 3 different formations each o
 * Wedge Phalanx
 
 ![Formation Selectin img](https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/Wedge%20Phalanx.PNG)
+
 
 ## Conlusion
 
