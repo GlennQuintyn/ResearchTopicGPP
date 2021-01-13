@@ -45,7 +45,6 @@ You can click with left mouse button to change the middle point of the group for
 When everything is setup you press the `FIGHT` button and the battle begins. At the end a small statistics window will be shown.
 
 ![Formation Selectin img](https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/BattleEndCard.PNG)
-width="40" height="40"
 
 There is also a `RESET` button Which will reset both teams and respawn them so you can test a different formation with previous settings rememberd.
 
@@ -71,8 +70,8 @@ In my current project I had only time to implement 3 different formations each o
 
 ## References
 
-### idk yet
-* [smt](https://www.wikiwand.com/simple/Phalanx_formation#:~:text=The%20phalanx%20formation%20is%20an,who%20often%20fought%20each%20other)
+### Other Info
+* [Meaning of Phalanx](https://www.wikiwand.com/simple/Phalanx_formation#:~:text=The%20phalanx%20formation%20is%20an,who%20often%20fought%20each%20other)
 
 ### formations
 * [6 x 6 Phalanx](https://en.wikipedia.org/wiki/Phalanx)
