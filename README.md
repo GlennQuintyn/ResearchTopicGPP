@@ -32,6 +32,8 @@ m_pBlueBlendedSteering = new BlendedSteering({ { m_pSeperationBehavior, 0.56f },
 		, { m_pVelMatchBehavior, 0.35f } , { m_pBlueSeekBehavior, 0.9f } });//implicit vetor of weighted behavior
 ```
 
+## Setting Up The Battle
+
 
 
 When everything is setup you press the `FIGHT` button and the battle begins. At the end a small statistics window I shown.
