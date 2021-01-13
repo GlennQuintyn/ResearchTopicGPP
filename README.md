@@ -55,15 +55,15 @@ In my current project I had only time to implement 3 different formations each o
 
 * 6 x 6 Phalanx
 
-![Formation Selectin img](https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/6x6 Phalanx.PNG)
+![Formation Selectin img](https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/6x6%20Phalanx.PNG)
 
 * Flying Wedge
 
-![Formation Selectin img](https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/Flying Wedge.PNG)
+![Formation Selectin img](https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/Flying%20Wedge.PNG)
 
 * Wedge Phalanx
 
-![Formation Selectin img](https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/Wedge Phalanx.PNG)
+![Formation Selectin img](https://github.com/GlennQuintyn/ResearchTopicGPP/blob/master/Wedge%20Phalanx.PNG)
 
 ## Conlusion
 
